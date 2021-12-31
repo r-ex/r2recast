@@ -501,8 +501,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 		const unsigned short* iv = &params->verts[i*3];
 		float* v = &navVerts[i*3];
 		v[0] = params->bmin[0] + iv[0] * params->cs;
-		v[1] = params->bmin[1] + iv[1] * params->ch;
-		v[2] = params->bmin[2] + iv[2] * params->cs;
+		v[1] = params->bmin[2] + iv[2] * params->ch;
+		v[2] = params->bmin[1] + iv[1] * params->cs;
 	}
 	// Off-mesh link vertices.
 	int n = 0;
@@ -514,7 +514,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			const float* linkv = &params->offMeshConVerts[i*2*3];
 			float* v = &navVerts[(offMeshVertsBase + n*2)*3];
 			dtVcopy(&v[0], &linkv[0]);
-			dtVcopy(&v[3], &linkv[3]);
+			dtVcopy(&v[2], &linkv[2]);
 			n++;
 		}
 	}
