@@ -466,7 +466,7 @@ int main(int /*argc*/, char** /*argv*/)
 		float keybSpeed = 22.0f;
 		if (SDL_GetModState() & KMOD_SHIFT)
 		{
-			keybSpeed *= 4.0f;
+			keybSpeed *= 400.0f;
 		}
 		
 		float movex = (moveRight - moveLeft) * keybSpeed * dt;

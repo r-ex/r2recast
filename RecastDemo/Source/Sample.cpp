@@ -188,8 +188,8 @@ void Sample::resetCommonSettings()
 void Sample::handleCommonSettings()
 {
 	imguiLabel("Rasterization");
-	imguiSlider("Cell Size", &m_cellSize, 0.1f, 1.0f, 0.01f);
-	imguiSlider("Cell Height", &m_cellHeight, 0.1f, 1.0f, 0.01f);
+	imguiSlider("Cell Size", &m_cellSize, 0.1f, 100.0f, 0.01f);
+	imguiSlider("Cell Height", &m_cellHeight, 0.1f, 100.0f, 0.01f);
 	
 	if (m_geom)
 	{
@@ -323,7 +323,7 @@ void Sample::renderOverlayToolStates(double* proj, double* model, int* view)
 }
 
 static const int NAVMESHSET_MAGIC = 'M'<<24 | 'S'<<16 | 'E'<<8 | 'T'; //'MSET';
-static const int NAVMESHSET_VERSION = 1;
+static const int NAVMESHSET_VERSION = 5;
 
 struct NavMeshSetHeader
 {

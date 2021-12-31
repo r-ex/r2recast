@@ -437,7 +437,11 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	const int dataSize = headerSize + vertsSize + polysSize + linksSize +
 						 detailMeshesSize + detailVertsSize + detailTrisSize +
 						 bvTreeSize + offMeshConsSize;
-						 
+
+	printf("%i %i %i %i(%i links) %i %i %i %i %i\n", headerSize, vertsSize, polysSize, linksSize, maxLinkCount, detailMeshesSize, detailVertsSize, detailTrisSize, bvTreeSize, offMeshConsSize);
+
+
+	printf("%i\n", dataSize);
 	unsigned char* data = (unsigned char*)dtAlloc(sizeof(unsigned char)*dataSize, DT_ALLOC_PERM);
 	if (!data)
 	{
@@ -447,6 +451,11 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	memset(data, 0, dataSize);
 	
 	unsigned char* d = data;
+
+	// vertsSize == sizeof(float)  * detailVertCount * 3
+	// polysSize == sizeof(dtPoly) * polyCount
+	// linksSize == sizeof(dtLink) * maxLinkCount
+	// detailMeshesSize = sizeof(dtPolyDetail)*params->polyCount
 
 	dtMeshHeader* header = dtGetThenAdvanceBufferPointer<dtMeshHeader>(d, headerSize);
 	float* navVerts = dtGetThenAdvanceBufferPointer<float>(d, vertsSize);
