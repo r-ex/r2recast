@@ -51,6 +51,9 @@ private:
 	float* m_normals;
 	int m_vertCount;
 	int m_triCount;
+
+	bool m_tf2_import_flip = true;
+	bool m_flip_tris = true;
 };
 
 #endif // MESHLOADER_OBJ

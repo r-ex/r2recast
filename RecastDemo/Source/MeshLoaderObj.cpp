@@ -52,9 +52,18 @@ void rcMeshLoaderObj::addVertex(float x, float y, float z, int& cap)
 		m_verts = nv;
 	}
 	float* dst = &m_verts[m_vertCount*3];
-	*dst++ = x*m_scale;
-	*dst++ = y*m_scale;
-	*dst++ = z*m_scale;
+	if (m_tf2_import_flip)
+	{
+		*dst++ = x * m_scale;
+		*dst++ = z * m_scale;
+		*dst++ = -y * m_scale;
+	}
+	else
+	{
+		*dst++ = x * m_scale;
+		*dst++ = y * m_scale;
+		*dst++ = z * m_scale;
+	}
 	m_vertCount++;
 }
 
@@ -206,7 +215,10 @@ bool rcMeshLoaderObj::load(const std::string& filename)
 				const int c = face[i];
 				if (a < 0 || a >= m_vertCount || b < 0 || b >= m_vertCount || c < 0 || c >= m_vertCount)
 					continue;
-				addTriangle(a, b, c, tcap);
+				if(m_flip_tris)
+					addTriangle(a, c, b, tcap);
+				else
+					addTriangle(a, b, c, tcap);
 			}
 		}
 	}
