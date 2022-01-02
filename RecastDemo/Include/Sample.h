@@ -133,7 +133,7 @@ protected:
 	SampleDebugDraw m_dd;
 	
 	dtNavMesh* loadAll(const char* path);
-	void saveAll(const char* path, const dtNavMesh* mesh);
+	void saveAll(const char* path,dtNavMesh* mesh);
 
 public:
 	Sample();

@@ -206,7 +206,7 @@ void Sample::handleCommonSettings()
 	imguiLabel("Agent");
 	imguiSlider("Height", &m_agentHeight, 0.1f, 5.0f, 0.1f);
 	imguiSlider("Radius", &m_agentRadius, 0.0f, 5.0f, 0.1f);
-	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, 0.1f);
+	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 50.0f, 0.1f);
 	imguiSlider("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, 1.0f);
 	
 	imguiSeparator();
@@ -408,8 +408,83 @@ dtNavMesh* Sample::loadAll(const char* path)
 
 	return mesh;
 }
+void coord_tf_fix(float* c)
+{
+	std::swap(c[1], c[2]);
+	c[2] *= -1;
+}
+void coord_tf_unfix(float* c)
+{
+	c[2] *= -1;
+	std::swap(c[1], c[2]);
+}
+void coord_short_tf_fix(unsigned short* c)
+{
+	std::swap(c[1], c[2]);
+	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
+}
+void coord_short_tf_unfix(unsigned short* c)
+{
+	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
+	std::swap(c[1], c[2]);
+}
+void node_tf_fix(dtBVNode* n)
+{
+	
+}
+void patch_headertf2(NavMeshSetHeader& h)
+{
+	coord_tf_fix(h.params.orig);
+}
+void unpatch_headertf2(NavMeshSetHeader& h)
+{
+	coord_tf_unfix(h.params.orig);
+}
+void patch_tiletf2(dtMeshTile* t)
+{
+	coord_tf_fix(t->header->bmin);
+	coord_tf_fix(t->header->bmax);
 
-void Sample::saveAll(const char* path, const dtNavMesh* mesh)
+	for (size_t i = 0; i < t->header->vertCount*3; i+=3)
+		coord_tf_fix(t->verts + i);
+	for (size_t i = 0; i < t->header->detailVertCount*3; i+=3)
+		coord_tf_fix(t->detailVerts + i);
+	for (size_t i = 0; i < t->header->polyCount; i++)
+		coord_tf_fix(t->polys[i].org);
+	//might be wrong because of coord change might break tree layout
+	for (size_t i = 0; i < t->header->bvNodeCount; i++)
+	{
+		coord_short_tf_fix(t->bvTree[i].bmax);
+		coord_short_tf_fix(t->bvTree[i].bmin);
+	}
+	/*
+		offmeshconnections
+
+	*/
+}
+void unpatch_tiletf2(dtMeshTile* t)
+{
+	coord_tf_unfix(t->header->bmin);
+	coord_tf_unfix(t->header->bmax);
+
+	for (size_t i = 0; i < t->header->vertCount*3; i+=3)
+		coord_tf_unfix(t->verts + i);
+	for (size_t i = 0; i < t->header->detailVertCount*3; i+=3)
+		coord_tf_unfix(t->detailVerts + i);
+	for (size_t i = 0; i < t->header->polyCount; i++)
+		coord_tf_unfix(t->polys[i].org);
+	//might be wrong because of coord change might break tree layout
+	for (size_t i = 0; i < t->header->bvNodeCount; i++)
+	{
+		coord_short_tf_unfix(t->bvTree[i].bmax);
+		coord_short_tf_unfix(t->bvTree[i].bmin);
+	}
+	/*
+		offmeshconnections
+
+	*/
+}
+void Sample::saveAll(const char* path,dtNavMesh* mesh)
 {
 	if (!mesh) return;
 
@@ -424,17 +499,18 @@ void Sample::saveAll(const char* path, const dtNavMesh* mesh)
 	header.numTiles = 0;
 	for (int i = 0; i < mesh->getMaxTiles(); ++i)
 	{
-		const dtMeshTile* tile = mesh->getTile(i);
+		dtMeshTile* tile = mesh->getTile(i);
 		if (!tile || !tile->header || !tile->dataSize) continue;
 		header.numTiles++;
 	}
 	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
+	unpatch_headertf2(header);
 	fwrite(&header, sizeof(NavMeshSetHeader), 1, fp);
 
 	// Store tiles.
 	for (int i = 0; i < mesh->getMaxTiles(); ++i)
 	{
-		const dtMeshTile* tile = mesh->getTile(i);
+		dtMeshTile* tile = mesh->getTile(i);
 		if (!tile || !tile->header || !tile->dataSize) continue;
 
 		NavMeshTileHeader tileHeader;
@@ -442,7 +518,9 @@ void Sample::saveAll(const char* path, const dtNavMesh* mesh)
 		tileHeader.dataSize = tile->dataSize;
 		fwrite(&tileHeader, sizeof(tileHeader), 1, fp);
 
+		unpatch_tiletf2(const_cast<dtMeshTile*>(tile));
 		fwrite(tile->data, tile->dataSize, 1, fp);
+		patch_tiletf2(const_cast<dtMeshTile*>(tile));
 	}
 
 	fclose(fp);
