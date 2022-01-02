@@ -854,9 +854,9 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	rcVcopy(m_cfg.bmin, bmin);
 	rcVcopy(m_cfg.bmax, bmax);
 	m_cfg.bmin[0] -= m_cfg.borderSize*m_cfg.cs;
-	m_cfg.bmin[1] -= m_cfg.borderSize*m_cfg.cs;
+	m_cfg.bmin[2] -= m_cfg.borderSize*m_cfg.cs;
 	m_cfg.bmax[0] += m_cfg.borderSize*m_cfg.cs;
-	m_cfg.bmax[1] += m_cfg.borderSize*m_cfg.cs;
+	m_cfg.bmax[2] += m_cfg.borderSize*m_cfg.cs;
 	
 	// Reset build times gathering.
 	m_ctx->resetTimers();
