@@ -339,6 +339,83 @@ struct NavMeshTileHeader
 	int dataSize;
 };
 
+void coord_tf_fix(float* c)
+{
+	std::swap(c[1], c[2]);
+	c[2] *= -1;
+}
+void coord_tf_unfix(float* c)
+{
+	c[2] *= -1;
+	std::swap(c[1], c[2]);
+}
+void coord_short_tf_fix(unsigned short* c)
+{
+	std::swap(c[1], c[2]);
+	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
+}
+void coord_short_tf_unfix(unsigned short* c)
+{
+	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
+	std::swap(c[1], c[2]);
+}
+void patch_headertf2(NavMeshSetHeader& h)
+{
+	coord_tf_fix(h.params.orig);
+}
+void unpatch_headertf2(NavMeshSetHeader& h)
+{
+	coord_tf_unfix(h.params.orig);
+}
+
+void patch_tiletf2(dtMeshTile* t)
+{
+	coord_tf_fix(t->header->bmin);
+	coord_tf_fix(t->header->bmax);
+
+	for (size_t i = 0; i < t->header->vertCount * 3; i += 3)
+		coord_tf_fix(t->verts + i);
+	for (size_t i = 0; i < t->header->detailVertCount * 3; i += 3)
+		coord_tf_fix(t->detailVerts + i);
+	for (size_t i = 0; i < t->header->polyCount; i++)
+		coord_tf_fix(t->polys[i].org);
+	//might be wrong because of coord change might break tree layout
+	for (size_t i = 0; i < t->header->bvNodeCount; i++)
+	{
+		coord_short_tf_fix(t->bvTree[i].bmax);
+		coord_short_tf_fix(t->bvTree[i].bmin);
+	}
+	for (size_t i = 0; i < t->header->offMeshConCount; i++)
+	{
+		coord_tf_fix(t->offMeshCons[i].pos);
+		coord_tf_fix(t->offMeshCons[i].pos + 3);
+		coord_tf_fix(t->offMeshCons[i].unk);
+	}
+}
+void unpatch_tiletf2(dtMeshTile* t)
+{
+	coord_tf_unfix(t->header->bmin);
+	coord_tf_unfix(t->header->bmax);
+
+	for (size_t i = 0; i < t->header->vertCount * 3; i += 3)
+		coord_tf_unfix(t->verts + i);
+	for (size_t i = 0; i < t->header->detailVertCount * 3; i += 3)
+		coord_tf_unfix(t->detailVerts + i);
+	for (size_t i = 0; i < t->header->polyCount; i++)
+		coord_tf_unfix(t->polys[i].org);
+	//might be wrong because of coord change might break tree layout
+	for (size_t i = 0; i < t->header->bvNodeCount; i++)
+	{
+		coord_short_tf_unfix(t->bvTree[i].bmax);
+		coord_short_tf_unfix(t->bvTree[i].bmin);
+	}
+	for (size_t i = 0; i < t->header->offMeshConCount; i++)
+	{
+		coord_tf_unfix(t->offMeshCons[i].pos);
+		coord_tf_unfix(t->offMeshCons[i].pos+3);
+		coord_tf_unfix(t->offMeshCons[i].unk);
+	}
+}
 dtNavMesh* Sample::loadAll(const char* path)
 {
 	FILE* fp = fopen(path, "rb");
@@ -369,13 +446,14 @@ dtNavMesh* Sample::loadAll(const char* path)
 		fclose(fp);
 		return 0;
 	}
+	patch_headertf2(header);
 	dtStatus status = mesh->init(&header.params);
 	if (dtStatusFailed(status))
 	{
 		fclose(fp);
 		return 0;
 	}
-
+	
 	// Read tiles.
 	for (int i = 0; i < header.numTiles; ++i)
 	{
@@ -400,90 +478,16 @@ dtNavMesh* Sample::loadAll(const char* path)
 			fclose(fp);
 			return 0;
 		}
-
-		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
+		dtTileRef result;
+		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, &result);
+		patch_tiletf2(const_cast<dtMeshTile*>(mesh->getTileByRef(result)));
 	}
 
 	fclose(fp);
 
 	return mesh;
 }
-void coord_tf_fix(float* c)
-{
-	std::swap(c[1], c[2]);
-	c[2] *= -1;
-}
-void coord_tf_unfix(float* c)
-{
-	c[2] *= -1;
-	std::swap(c[1], c[2]);
-}
-void coord_short_tf_fix(unsigned short* c)
-{
-	std::swap(c[1], c[2]);
-	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
-}
-void coord_short_tf_unfix(unsigned short* c)
-{
-	c[2] = std::numeric_limits<unsigned short>::max() - c[2];
-	std::swap(c[1], c[2]);
-}
-void node_tf_fix(dtBVNode* n)
-{
-	
-}
-void patch_headertf2(NavMeshSetHeader& h)
-{
-	coord_tf_fix(h.params.orig);
-}
-void unpatch_headertf2(NavMeshSetHeader& h)
-{
-	coord_tf_unfix(h.params.orig);
-}
-void patch_tiletf2(dtMeshTile* t)
-{
-	coord_tf_fix(t->header->bmin);
-	coord_tf_fix(t->header->bmax);
 
-	for (size_t i = 0; i < t->header->vertCount*3; i+=3)
-		coord_tf_fix(t->verts + i);
-	for (size_t i = 0; i < t->header->detailVertCount*3; i+=3)
-		coord_tf_fix(t->detailVerts + i);
-	for (size_t i = 0; i < t->header->polyCount; i++)
-		coord_tf_fix(t->polys[i].org);
-	//might be wrong because of coord change might break tree layout
-	for (size_t i = 0; i < t->header->bvNodeCount; i++)
-	{
-		coord_short_tf_fix(t->bvTree[i].bmax);
-		coord_short_tf_fix(t->bvTree[i].bmin);
-	}
-	/*
-		offmeshconnections
-
-	*/
-}
-void unpatch_tiletf2(dtMeshTile* t)
-{
-	coord_tf_unfix(t->header->bmin);
-	coord_tf_unfix(t->header->bmax);
-
-	for (size_t i = 0; i < t->header->vertCount*3; i+=3)
-		coord_tf_unfix(t->verts + i);
-	for (size_t i = 0; i < t->header->detailVertCount*3; i+=3)
-		coord_tf_unfix(t->detailVerts + i);
-	for (size_t i = 0; i < t->header->polyCount; i++)
-		coord_tf_unfix(t->polys[i].org);
-	//might be wrong because of coord change might break tree layout
-	for (size_t i = 0; i < t->header->bvNodeCount; i++)
-	{
-		coord_short_tf_unfix(t->bvTree[i].bmax);
-		coord_short_tf_unfix(t->bvTree[i].bmin);
-	}
-	/*
-		offmeshconnections
-
-	*/
-}
 void Sample::saveAll(const char* path,dtNavMesh* mesh)
 {
 	if (!mesh) return;

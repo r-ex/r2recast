@@ -247,6 +247,9 @@ struct dtOffMeshConnection
 
 	/// The id of the offmesh connection. (User assigned when the navigation mesh is built.)
 	unsigned int userId;
+
+	float unk[3];
+	float another_unk;
 };
 
 /// Provides high level information related to a dtMeshTile object.
