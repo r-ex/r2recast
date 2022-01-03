@@ -36,7 +36,7 @@ struct rcLayerRegion
 {
 	unsigned char layers[RC_MAX_LAYERS];
 	unsigned char neis[RC_MAX_NEIS];
-	unsigned short ymin, ymax;
+	unsigned short zmin, zmax;
 	unsigned char layerId;		// Layer ID
 	unsigned char nlayers;		// Layer count
 	unsigned char nneis;		// Neighbour count
@@ -230,8 +230,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 	for (int i = 0; i < nregs; ++i)
 	{
 		regs[i].layerId = 0xff;
-		regs[i].ymin = 0xffff;
-		regs[i].ymax = 0;
+		regs[i].zmin = 0xffff;
+		regs[i].zmax = 0;
 	}
 	
 	// Find region neighbours and overlapping regions.
@@ -250,8 +250,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 				const unsigned char ri = srcReg[i];
 				if (ri == 0xff) continue;
 				
-				regs[ri].ymin = rcMin(regs[ri].ymin, s.y);
-				regs[ri].ymax = rcMax(regs[ri].ymax, s.y);
+				regs[ri].zmin = rcMin(regs[ri].zmin, s.z);
+				regs[ri].zmax = rcMax(regs[ri].zmax, s.z);
 				
 				// Collect all region layers.
 				if (nlregs < RC_MAX_LAYERS)
@@ -342,9 +342,9 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 				if (contains(root.layers, root.nlayers, nei))
 					continue;
 				// Skip if the height range would become too large.
-				const int ymin = rcMin(root.ymin, regn.ymin);
-				const int ymax = rcMax(root.ymax, regn.ymax);
-				if ((ymax - ymin) >= 255)
+				const int zmin = rcMin(root.zmin, regn.zmin);
+				const int zmax = rcMax(root.zmax, regn.zmax);
+				if ((zmax - zmin) >= 255)
 					 continue;
 
 				if (nstack < MAX_STACK)
@@ -363,8 +363,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 							return false;
 						}
 					}
-					root.ymin = rcMin(root.ymin, regn.ymin);
-					root.ymax = rcMax(root.ymax, regn.ymax);
+					root.zmin = rcMin(root.zmin, regn.zmin);
+					root.zmax = rcMax(root.zmax, regn.zmax);
 				}
 			}
 		}
@@ -393,12 +393,12 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 				if (!rj.base) continue;
 				
 				// Skip if the regions are not close to each other.
-				if (!overlapRange(ri.ymin,ri.ymax+mergeHeight, rj.ymin,rj.ymax+mergeHeight))
+				if (!overlapRange(ri.zmin,ri.zmax+mergeHeight, rj.zmin,rj.zmax+mergeHeight))
 					continue;
 				// Skip if the height range would become too large.
-				const int ymin = rcMin(ri.ymin, rj.ymin);
-				const int ymax = rcMax(ri.ymax, rj.ymax);
-				if ((ymax - ymin) >= 255)
+				const int zmin = rcMin(ri.zmin, rj.zmin);
+				const int zmax = rcMax(ri.zmax, rj.zmax);
+				if ((zmax - zmin) >= 255)
 				  continue;
 						  
 				// Make sure that there is no overlap when merging 'ri' and 'rj'.
@@ -449,8 +449,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 					}
 
 					// Update height bounds.
-					ri.ymin = rcMin(ri.ymin, rj.ymin);
-					ri.ymax = rcMax(ri.ymax, rj.ymax);
+					ri.zmin = rcMin(ri.zmin, rj.zmin);
+					ri.zmax = rcMax(ri.zmax, rj.zmax);
 				}
 			}
 		}
@@ -490,9 +490,9 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 	rcVcopy(bmin, chf.bmin);
 	rcVcopy(bmax, chf.bmax);
 	bmin[0] += borderSize*chf.cs;
-	bmin[2] += borderSize*chf.cs;
+	bmin[1] += borderSize*chf.cs;
 	bmax[0] -= borderSize*chf.cs;
-	bmax[2] -= borderSize*chf.cs;
+	bmax[1] -= borderSize*chf.cs;
 	
 	lset.nlayers = (int)layerId;
 	
@@ -544,8 +544,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 		{
 			if (regs[j].base && regs[j].layerId == curId)
 			{
-				hmin = (int)regs[j].ymin;
-				hmax = (int)regs[j].ymax;
+				hmin = (int)regs[j].zmin;
+				hmax = (int)regs[j].zmax;
 			}
 		}
 
@@ -557,8 +557,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 		// Adjust the bbox to fit the heightfield.
 		rcVcopy(layer->bmin, bmin);
 		rcVcopy(layer->bmax, bmax);
-		layer->bmin[1] = bmin[1] + hmin*chf.ch;
-		layer->bmax[1] = bmin[1] + hmax*chf.ch;
+		layer->bmin[2] = bmin[2] + hmin*chf.ch;
+		layer->bmax[2] = bmin[2] + hmax*chf.ch;
 		layer->hmin = hmin;
 		layer->hmax = hmax;
 
@@ -595,7 +595,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 					
 					// Store height and area type.
 					const int idx = x+y*lw;
-					layer->heights[idx] = (unsigned char)(s.y - hmin);
+					layer->heights[idx] = (unsigned char)(s.z - hmin);
 					layer->areas[idx] = chf.areas[j];
 					
 					// Check connection.
@@ -615,8 +615,8 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 								portal |= (unsigned char)(1<<dir);
 								// Update height so that it matches on both sides of the portal.
 								const rcCompactSpan& as = chf.spans[ai];
-								if (as.y > hmin)
-									layer->heights[idx] = rcMax(layer->heights[idx], (unsigned char)(as.y - hmin));
+								if (as.z > hmin)
+									layer->heights[idx] = rcMax(layer->heights[idx], (unsigned char)(as.z - hmin));
 							}
 							// Valid connection mask
 							if (chf.areas[ai] != RC_NULL_AREA && lid == alid)

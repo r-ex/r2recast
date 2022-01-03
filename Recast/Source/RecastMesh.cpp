@@ -363,7 +363,7 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 				const int* p2 = &verts[(indices[next(i1, n)] & 0x0fffffff) * 4];
 				
 				int dx = p2[0] - p0[0];
-				int dy = p2[2] - p0[2];
+				int dy = p2[1] - p0[1];
 				int len = dx*dx + dy*dy;
 				
 				if (minLen < 0 || len < minLen)
@@ -395,7 +395,7 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 					const int* p0 = &verts[(indices[i] & 0x0fffffff) * 4];
 					const int* p2 = &verts[(indices[next(i2, n)] & 0x0fffffff) * 4];
 					int dx = p2[0] - p0[0];
-					int dy = p2[2] - p0[2];
+					int dy = p2[1] - p0[1];
 					int len = dx*dx + dy*dy;
 					
 					if (minLen < 0 || len < minLen)

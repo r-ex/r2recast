@@ -322,7 +322,7 @@ struct rcCompactCell
 /// Represents a span of unobstructed space within a compact heightfield.
 struct rcCompactSpan
 {
-	unsigned short y;			///< The lower extent of the span. (Measured from the heightfield's base.)
+	unsigned short z;			///< The lower extent of the span. (Measured from the heightfield's base.)
 	unsigned short reg;			///< The id of the region the span belongs to. (Or zero if not in a region.)
 	unsigned int con : 24;		///< Packed neighbor connection data.
 	unsigned int h : 8;			///< The height of the span.  (Measured from #y.)

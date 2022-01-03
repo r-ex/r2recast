@@ -310,7 +310,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 		{
 			for (int i = 0; i < params->detailVertsCount; ++i)
 			{
-				const float h = params->detailVerts[i*3+1];
+				const float h = params->detailVerts[i*3+2];
 				hmin = dtMin(hmin,h);
 				hmax = dtMax(hmax,h);
 			}
@@ -320,7 +320,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			for (int i = 0; i < params->vertCount; ++i)
 			{
 				const unsigned short* iv = &params->verts[i*3];
-				const float h = params->bmin[1] + iv[1] * params->ch;
+				const float h = params->bmin[2] + iv[2] * params->ch;
 				hmin = dtMin(hmin,h);
 				hmax = dtMax(hmax,h);
 			}
@@ -343,7 +343,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			// Zero out off-mesh start positions which are not even potentially touching the mesh.
 			if (offMeshConClass[i*2+0] == 0xff)
 			{
-				if (p0[1] < bmin[1] || p0[1] > bmax[1])
+				if (p0[2] < bmin[2] || p0[2] > bmax[2])
 					offMeshConClass[i*2+0] = 0;
 			}
 

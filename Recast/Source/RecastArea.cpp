@@ -329,23 +329,23 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigne
 	
 	if (maxx < 0) return;
 	if (minx >= chf.width) return;
-	if (maxz < 0) return;
-	if (minz >= chf.height) return;
+	if (maxy < 0) return;
+	if (miny >= chf.height) return;
 
 	if (minx < 0) minx = 0;
 	if (maxx >= chf.width) maxx = chf.width-1;
-	if (minz < 0) minz = 0;
-	if (maxz >= chf.height) maxz = chf.height-1;	
+	if (miny < 0) miny = 0;
+	if (maxy >= chf.height) maxy = chf.height-1;	
 	
-	for (int z = minz; z <= maxz; ++z)
+	for (int y = miny; y <= maxy; ++y)
 	{
 		for (int x = minx; x <= maxx; ++x)
 		{
-			const rcCompactCell& c = chf.cells[x+z*chf.width];
+			const rcCompactCell& c = chf.cells[x+y*chf.width];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				rcCompactSpan& s = chf.spans[i];
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.z >= minz && (int)s.z <= maxz)
 				{
 					if (chf.areas[i] != RC_NULL_AREA)
 						chf.areas[i] = areaId;
@@ -394,15 +394,15 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 		rcVmin(bmin, &verts[i*3]);
 		rcVmax(bmax, &verts[i*3]);
 	}
-	bmin[1] = hmin;
-	bmax[1] = hmax;
+	bmin[2] = hmin;
+	bmax[2] = hmax;
 
 	int minx = (int)((bmin[0]-chf.bmin[0])/chf.cs);
-	int miny = (int)((bmin[1]-chf.bmin[1])/chf.ch);
-	int minz = (int)((bmin[2]-chf.bmin[2])/chf.cs);
+	int miny = (int)((bmin[1]-chf.bmin[1])/chf.cs);
+	int minz = (int)((bmin[2]-chf.bmin[2])/chf.ch);
 	int maxx = (int)((bmax[0]-chf.bmin[0])/chf.cs);
-	int maxy = (int)((bmax[1]-chf.bmin[1])/chf.ch);
-	int maxz = (int)((bmax[2]-chf.bmin[2])/chf.cs);
+	int maxy = (int)((bmax[1]-chf.bmin[1])/chf.cs);
+	int maxz = (int)((bmax[2]-chf.bmin[2])/chf.ch);
 	
 	if (maxx < 0) return;
 	if (minx >= chf.width) return;
@@ -416,22 +416,22 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 	
 	
 	// TODO: Optimize.
-	for (int z = minz; z <= maxz; ++z)
+	for (int y = miny; y <= maxy; ++y)
 	{
 		for (int x = minx; x <= maxx; ++x)
 		{
-			const rcCompactCell& c = chf.cells[x+z*chf.width];
+			const rcCompactCell& c = chf.cells[x+y*chf.width];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				rcCompactSpan& s = chf.spans[i];
 				if (chf.areas[i] == RC_NULL_AREA)
 					continue;
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.z >= minz && (int)s.z <= maxz)
 				{
 					float p[3];
 					p[0] = chf.bmin[0] + (x+0.5f)*chf.cs; 
-					p[1] = 0;
-					p[2] = chf.bmin[2] + (z+0.5f)*chf.cs; 
+					p[1] = chf.bmin[1] + (y + 0.5f)*chf.cs;
+					p[2] = 0; 
 
 					if (pointInPoly(nverts, verts, p))
 					{
@@ -552,20 +552,20 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 	
 	if (maxx < 0) return;
 	if (minx >= chf.width) return;
-	if (maxz < 0) return;
-	if (minz >= chf.height) return;
+	if (maxy < 0) return;
+	if (miny >= chf.height) return;
 	
 	if (minx < 0) minx = 0;
 	if (maxx >= chf.width) maxx = chf.width-1;
-	if (minz < 0) minz = 0;
-	if (maxz >= chf.height) maxz = chf.height-1;	
+	if (miny < 0) minz = 0;
+	if (maxy >= chf.height) maxy = chf.height-1;	
 	
 	
-	for (int z = minz; z <= maxz; ++z)
+	for (int y = miny; y <= maxy; ++y)
 	{
 		for (int x = minx; x <= maxx; ++x)
 		{
-			const rcCompactCell& c = chf.cells[x+z*chf.width];
+			const rcCompactCell& c = chf.cells[x+y*chf.width];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				rcCompactSpan& s = chf.spans[i];
@@ -573,14 +573,14 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 				if (chf.areas[i] == RC_NULL_AREA)
 					continue;
 				
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.z >= minz && (int)s.z <= maxz)
 				{
 					const float sx = chf.bmin[0] + (x+0.5f)*chf.cs; 
-					const float sz = chf.bmin[2] + (z+0.5f)*chf.cs; 
+					const float sy = chf.bmin[1] + (y+0.5f)*chf.cs; 
 					const float dx = sx - pos[0];
-					const float dz = sz - pos[2];
+					const float dy = sy - pos[1];
 					
-					if (dx*dx + dz*dz < r2)
+					if (dx*dx + dy*dy < r2)
 					{
 						chf.areas[i] = areaId;
 					}

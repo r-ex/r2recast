@@ -676,7 +676,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 			// using lexological sort or else there will be seams.
 			if (fabsf(vj[0]-vi[0]) < 1e-6f)
 			{
-				if (vj[2] > vi[2])
+				if (vj[1] > vi[1])
 				{
 					rcSwap(vj,vi);
 					swapped = true;
@@ -694,7 +694,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 			float dx = vi[0] - vj[0];
 			float dy = vi[1] - vj[1];
 			float dz = vi[2] - vj[2];
-			float d = sqrtf(dx*dx + dz*dz);
+			float d = sqrtf(dx*dx + dy*dy);
 			int nn = 1 + (int)floorf(d/sampleDist);
 			if (nn >= MAX_VERTS_PER_EDGE) nn = MAX_VERTS_PER_EDGE-1;
 			if (nverts+nn >= MAX_VERTS)
@@ -707,7 +707,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 				pos[0] = vj[0] + dx*u;
 				pos[1] = vj[1] + dy*u;
 				pos[2] = vj[2] + dz*u;
-				pos[1] = getHeight(pos[0],pos[1],pos[2], cs, ics, chf.ch, heightSearchRadius, hp)*chf.ch;
+				pos[2] = getHeight(pos[0],pos[1],pos[2], cs, ics, chf.ch, heightSearchRadius, hp)*chf.ch;
 			}
 			// Simplify samples.
 			int idx[MAX_VERTS_PER_EDGE] = {0,nn};
@@ -801,22 +801,22 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 		}
 		int x0 = (int)floorf(bmin[0]/sampleDist);
 		int x1 = (int)ceilf(bmax[0]/sampleDist);
-		int z0 = (int)floorf(bmin[2]/sampleDist);
-		int z1 = (int)ceilf(bmax[2]/sampleDist);
+		int y0 = (int)floorf(bmin[1]/sampleDist);
+		int y1 = (int)ceilf(bmax[1]/sampleDist);
 		samples.clear();
-		for (int z = z0; z < z1; ++z)
+		for (int y = y0; y < y1; ++y)
 		{
 			for (int x = x0; x < x1; ++x)
 			{
 				float pt[3];
 				pt[0] = x*sampleDist;
-				pt[1] = (bmax[1]+bmin[1])*0.5f;
-				pt[2] = z*sampleDist;
+				pt[1] = y * sampleDist;
+				pt[2] = (bmax[1] + bmin[1])*0.5f;
 				// Make sure the samples are not too close to the edges.
 				if (distToPoly(nin,in,pt) > -sampleDist/2) continue;
 				samples.push(x);
+				samples.push(y);
 				samples.push(getHeight(pt[0], pt[1], pt[2], cs, ics, chf.ch, heightSearchRadius, hp));
-				samples.push(z);
 				samples.push(0); // Not added
 			}
 		}
@@ -842,8 +842,8 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 				// The sample location is jittered to get rid of some bad triangulations
 				// which are cause by symmetrical data from the grid structure.
 				pt[0] = s[0]*sampleDist + getJitterX(i)*cs*0.1f;
-				pt[1] = s[1]*chf.ch;
-				pt[2] = s[2]*sampleDist + getJitterY(i)*cs*0.1f;
+				pt[1] = s[1] * sampleDist + getJitterY(i)*cs*0.1f;
+				pt[2] = s[2] * chf.ch;
 				float d = distToTriMesh(pt, verts, nverts, &tris[0], tris.size()/4);
 				if (d < 0) continue; // did not hit the mesh.
 				if (d > bestd)
@@ -901,21 +901,21 @@ static void seedArrayWithPolyCenter(rcContext* ctx, const rcCompactHeightfield& 
 		for (int k = 0; k < 9 && dmin > 0; ++k)
 		{
 			const int ax = (int)verts[poly[j]*3+0] + offset[k*2+0];
-			const int ay = (int)verts[poly[j]*3+1];
-			const int az = (int)verts[poly[j]*3+2] + offset[k*2+1];
+			const int ay = (int)verts[poly[j]*3+1] + offset[k * 2 + 1];
+			const int az = (int)verts[poly[j]*3+2];
 			if (ax < hp.xmin || ax >= hp.xmin+hp.width ||
-				az < hp.ymin || az >= hp.ymin+hp.height)
+				ay < hp.ymin || ay >= hp.ymin+hp.height)
 				continue;
 			
-			const rcCompactCell& c = chf.cells[(ax+bs)+(az+bs)*chf.width];
+			const rcCompactCell& c = chf.cells[(ax+bs)+(ay+bs)*chf.width];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni && dmin > 0; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				int d = rcAbs(ay - (int)s.y);
+				int d = rcAbs(az - (int)s.z);
 				if (d < dmin)
 				{
 					startCellX = ax;
-					startCellY = az;
+					startCellY = ay;
 					startSpanIndex = i;
 					dmin = d;
 				}
@@ -1009,7 +1009,7 @@ static void seedArrayWithPolyCenter(rcContext* ctx, const rcCompactHeightfield& 
 
 	memset(hp.data, 0xff, sizeof(unsigned short)*hp.width*hp.height);
 	const rcCompactSpan& cs = chf.spans[ci];
-	hp.data[cx-hp.xmin+(cy-hp.ymin)*hp.width] = cs.y;
+	hp.data[cx-hp.xmin+(cy-hp.ymin)*hp.width] = cs.z;
 }
 
 
@@ -1056,7 +1056,7 @@ static void getHeightData(rcContext* ctx, const rcCompactHeightfield& chf,
 					if (s.reg == region)
 					{
 						// Store height
-						hp.data[hx + hy*hp.width] = s.y;
+						hp.data[hx + hy*hp.width] = s.z;
 						empty = false;
 
 						// If any of the neighbours is not in same region,
@@ -1131,7 +1131,7 @@ static void getHeightData(rcContext* ctx, const rcCompactHeightfield& chf,
 			const int ai = (int)chf.cells[ax + ay*chf.width].index + rcGetCon(cs, dir);
 			const rcCompactSpan& as = chf.spans[ai];
 			
-			hp.data[hx + hy*hp.width] = as.y;
+			hp.data[hx + hy*hp.width] = as.z;
 			
 			push3(queue, ax, ay, ai);
 		}
@@ -1226,8 +1226,8 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 			const unsigned short* v = &mesh.verts[p[j]*3];
 			xmin = rcMin(xmin, (int)v[0]);
 			xmax = rcMax(xmax, (int)v[0]);
-			ymin = rcMin(ymin, (int)v[2]);
-			ymax = rcMax(ymax, (int)v[2]);
+			ymin = rcMin(ymin, (int)v[1]);
+			ymax = rcMax(ymax, (int)v[1]);
 			nPolyVerts++;
 		}
 		xmin = rcMax(0,xmin-1);
@@ -1285,8 +1285,8 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 			if(p[j] == RC_MESH_NULL_IDX) break;
 			const unsigned short* v = &mesh.verts[p[j]*3];
 			poly[j*3+0] = v[0]*cs;
-			poly[j*3+1] = v[1]*ch;
-			poly[j*3+2] = v[2]*cs;
+			poly[j*3+1] = v[1]*cs;
+			poly[j*3+2] = v[2]*ch;
 			npoly++;
 		}
 		
@@ -1312,8 +1312,8 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		for (int j = 0; j < nverts; ++j)
 		{
 			verts[j*3+0] += orig[0];
-			verts[j*3+1] += orig[1] + chf.ch; // Is this offset necessary?
-			verts[j*3+2] += orig[2];
+			verts[j * 3 + 1] += orig[1];
+			verts[j*3+2] += orig[2] + chf.ch; // Is this offset necessary?
 		}
 		// Offset poly too, will be used to flag checking.
 		for (int j = 0; j < npoly; ++j)

@@ -164,17 +164,17 @@ bool rcCreateChunkyTriMesh(const float* verts, const int* tris, int ntris,
 		const int* t = &tris[i*3];
 		BoundsItem& it = items[i];
 		it.i = i;
-		// Calc triangle XZ bounds.
+		// Calc triangle XY bounds.
 		it.bmin[0] = it.bmax[0] = verts[t[0]*3+0];
 		it.bmin[1] = it.bmax[1] = verts[t[0]*3+2];
 		for (int j = 1; j < 3; ++j)
 		{
 			const float* v = &verts[t[j]*3];
 			if (v[0] < it.bmin[0]) it.bmin[0] = v[0]; 
-			if (v[2] < it.bmin[1]) it.bmin[1] = v[2]; 
+			if (v[1] < it.bmin[1]) it.bmin[1] = v[1]; 
 
 			if (v[0] > it.bmax[0]) it.bmax[0] = v[0]; 
-			if (v[2] > it.bmax[1]) it.bmax[1] = v[2]; 
+			if (v[1] > it.bmax[1]) it.bmax[1] = v[1]; 
 		}
 	}
 

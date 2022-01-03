@@ -287,7 +287,7 @@ void rcCalcBounds(const float* verts, int nv, float* bmin, float* bmax)
 void rcCalcGridSize(const float* bmin, const float* bmax, float cs, int* w, int* h)
 {
 	*w = (int)((bmax[0] - bmin[0])/cs+0.5f);
-	*h = (int)((bmax[2] - bmin[2])/cs+0.5f);
+	*h = (int)((bmax[1] - bmin[1])/cs+0.5f);
 }
 
 /// @par
@@ -432,7 +432,7 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 	chf.maxRegions = 0;
 	rcVcopy(chf.bmin, hf.bmin);
 	rcVcopy(chf.bmax, hf.bmax);
-	chf.bmax[1] += walkableHeight*hf.ch;
+	chf.bmax[2] += walkableHeight*hf.ch;
 	chf.cs = hf.cs;
 	chf.ch = hf.ch;
 	chf.cells = (rcCompactCell*)rcAlloc(sizeof(rcCompactCell)*w*h, RC_ALLOC_PERM);
@@ -477,7 +477,7 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 				{
 					const int bot = (int)s->smax;
 					const int top = s->next ? (int)s->next->smin : MAX_HEIGHT;
-					chf.spans[idx].y = (unsigned short)rcClamp(bot, 0, 0xffff);
+					chf.spans[idx].z = (unsigned short)rcClamp(bot, 0, 0xffff);
 					chf.spans[idx].h = (unsigned char)rcClamp(top - bot, 0, 0xff);
 					chf.areas[idx] = s->area;
 					idx++;
@@ -515,12 +515,12 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 					for (int k = (int)nc.index, nk = (int)(nc.index+nc.count); k < nk; ++k)
 					{
 						const rcCompactSpan& ns = chf.spans[k];
-						const int bot = rcMax(s.y, ns.y);
-						const int top = rcMin(s.y+s.h, ns.y+ns.h);
+						const int bot = rcMax(s.z, ns.z);
+						const int top = rcMin(s.z+s.h, ns.z+ns.h);
 
 						// Check that the gap between the spans is walkable,
 						// and that the climb height between the gaps is not too high.
-						if ((top - bot) >= walkableHeight && rcAbs((int)ns.y - (int)s.y) <= walkableClimb)
+						if ((top - bot) >= walkableHeight && rcAbs((int)ns.z - (int)s.z) <= walkableClimb)
 						{
 							// Mark direction as walkable.
 							const int lidx = k - (int)nc.index;

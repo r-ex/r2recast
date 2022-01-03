@@ -31,7 +31,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 						   bool& isBorderVertex)
 {
 	const rcCompactSpan& s = chf.spans[i];
-	int ch = (int)s.y;
+	int ch = (int)s.z;
 	int dirp = (dir+1) & 0x3;
 	
 	unsigned int regs[4] = {0,0,0,0};
@@ -46,7 +46,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ay = y + rcGetDirOffsetY(dir);
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 		const rcCompactSpan& as = chf.spans[ai];
-		ch = rcMax(ch, (int)as.y);
+		ch = rcMax(ch, (int)as.z);
 		regs[1] = chf.spans[ai].reg | (chf.areas[ai] << 16);
 		if (rcGetCon(as, dirp) != RC_NOT_CONNECTED)
 		{
@@ -54,7 +54,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ay2 = ay + rcGetDirOffsetY(dirp);
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dirp);
 			const rcCompactSpan& as2 = chf.spans[ai2];
-			ch = rcMax(ch, (int)as2.y);
+			ch = rcMax(ch, (int)as2.z);
 			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
 		}
 	}
@@ -64,7 +64,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ay = y + rcGetDirOffsetY(dirp);
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dirp);
 		const rcCompactSpan& as = chf.spans[ai];
-		ch = rcMax(ch, (int)as.y);
+		ch = rcMax(ch, (int)as.z);
 		regs[3] = chf.spans[ai].reg | (chf.areas[ai] << 16);
 		if (rcGetCon(as, dir) != RC_NOT_CONNECTED)
 		{
@@ -72,7 +72,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ay2 = ay + rcGetDirOffsetY(dir);
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dir);
 			const rcCompactSpan& as2 = chf.spans[ai2];
-			ch = rcMax(ch, (int)as2.y);
+			ch = rcMax(ch, (int)as2.z);
 			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
 		}
 	}
@@ -840,9 +840,9 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 		// If the heightfield was build with bordersize, remove the offset.
 		const float pad = borderSize*chf.cs;
 		cset.bmin[0] += pad;
-		cset.bmin[2] += pad;
+		cset.bmin[1] += pad;
 		cset.bmax[0] -= pad;
-		cset.bmax[2] -= pad;
+		cset.bmax[1] -= pad;
 	}
 	cset.cs = chf.cs;
 	cset.ch = chf.ch;
@@ -975,7 +975,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 						{
 							int* v = &cont->verts[j*4];
 							v[0] -= borderSize;
-							v[2] -= borderSize;
+							v[1] -= borderSize;
 						}
 					}
 					
@@ -994,7 +994,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 						{
 							int* v = &cont->rverts[j*4];
 							v[0] -= borderSize;
-							v[2] -= borderSize;
+							v[1] -= borderSize;
 						}
 					}
 					

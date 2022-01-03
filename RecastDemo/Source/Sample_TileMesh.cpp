@@ -655,15 +655,15 @@ void Sample_TileMesh::buildTile(const float* pos)
 	
 	const float ts = m_tileSize*m_cellSize;
 	const int tx = (int)((pos[0] - bmin[0]) / ts);
-	const int ty = (int)((pos[2] - bmin[2]) / ts);
+	const int ty = (int)((pos[1] - bmin[1]) / ts);
 	
-	m_lastBuiltTileBmin[0] = bmin[0] + tx*ts;
-	m_lastBuiltTileBmin[1] = bmin[1];
-	m_lastBuiltTileBmin[2] = bmin[2] + ty*ts;
+	m_lastBuiltTileBmin[0] = bmin[0] + tx * ts;
+	m_lastBuiltTileBmin[1] = bmin[1] + ty * ts;
+	m_lastBuiltTileBmin[2] = bmin[2] ;
 	
-	m_lastBuiltTileBmax[0] = bmin[0] + (tx+1)*ts;
-	m_lastBuiltTileBmax[1] = bmax[1];
-	m_lastBuiltTileBmax[2] = bmin[2] + (ty+1)*ts;
+	m_lastBuiltTileBmax[0] = bmin[0] + (tx + 1)*ts;
+	m_lastBuiltTileBmax[1] = bmin[1] + (ty + 1)*ts;
+	m_lastBuiltTileBmax[2] = bmax[2] ;
 	
 	m_tileCol = duRGBA(255,255,255,64);
 	
@@ -855,9 +855,9 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	rcVcopy(m_cfg.bmin, bmin);
 	rcVcopy(m_cfg.bmax, bmax);
 	m_cfg.bmin[0] -= m_cfg.borderSize*m_cfg.cs;
-	m_cfg.bmin[2] -= m_cfg.borderSize*m_cfg.cs;
+	m_cfg.bmin[1] -= m_cfg.borderSize*m_cfg.cs;
 	m_cfg.bmax[0] += m_cfg.borderSize*m_cfg.cs;
-	m_cfg.bmax[2] += m_cfg.borderSize*m_cfg.cs;
+	m_cfg.bmax[1] += m_cfg.borderSize*m_cfg.cs;
 	
 	// Reset build times gathering.
 	m_ctx->resetTimers();
@@ -894,9 +894,9 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	
 	float tbmin[2], tbmax[2];
 	tbmin[0] = m_cfg.bmin[0];
-	tbmin[1] = m_cfg.bmin[2];
+	tbmin[1] = m_cfg.bmin[1];
 	tbmax[0] = m_cfg.bmax[0];
-	tbmax[1] = m_cfg.bmax[2];
+	tbmax[1] = m_cfg.bmax[1];
 	int cid[512];// TODO: Make grow when returning too many items.
 	const int ncid = rcGetChunksOverlappingRect(chunkyMesh, tbmin, tbmax, cid, 512);
 	if (!ncid)
@@ -1044,7 +1044,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not create contours.");
 		return 0;
 	}
-	
+
 	if (m_cset->nconts == 0)
 	{
 		return 0;

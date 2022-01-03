@@ -247,7 +247,7 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 	const int w = hf.width;
 	const int h = hf.height;
 	float tmin[3], tmax[3];
-	const float by = bmax[1] - bmin[1];
+	const float bz = bmax[2] - bmin[2];
 	
 	// Calculate the bounding box of the triangle.
 	rcVcopy(tmin, v0);
@@ -262,8 +262,8 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 		return true;
 	
 	// Calculate the footprint of the triangle on the grid's y-axis
-	int y0 = (int)((tmin[2] - bmin[2])*ics);
-	int y1 = (int)((tmax[2] - bmin[2])*ics);
+	int y0 = (int)((tmin[1] - bmin[1])*ics);
+	int y1 = (int)((tmax[1] - bmin[1])*ics);
 	y0 = rcClamp(y0, 0, h-1);
 	y1 = rcClamp(y1, 0, h-1);
 	
@@ -279,7 +279,7 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 	for (int y = y0; y <= y1; ++y)
 	{
 		// Clip polygon to row. Store the remaining polygon as well
-		const float cz = bmin[2] + y*cs;
+		const float cz = bmin[1] + y*cs;
 		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cz+cs, 2);
 		rcSwap(in, p1);
 		if (nvrow < 3) continue;
@@ -307,20 +307,20 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 			if (nv < 3) continue;
 			
 			// Calculate min and max of the span.
-			float smin = p1[1], smax = p1[1];
+			float smin = p1[2], smax = p1[2];
 			for (int i = 1; i < nv; ++i)
 			{
-				smin = rcMin(smin, p1[i*3+1]);
-				smax = rcMax(smax, p1[i*3+1]);
+				smin = rcMin(smin, p1[i*3+2]);
+				smax = rcMax(smax, p1[i*3+2]);
 			}
-			smin -= bmin[1];
-			smax -= bmin[1];
+			smin -= bmin[2];
+			smax -= bmin[2];
 			// Skip the span if it is outside the heightfield bbox
 			if (smax < 0.0f) continue;
-			if (smin > by) continue;
+			if (smin > bz) continue;
 			// Clamp the span to the heightfield bbox.
 			if (smin < 0.0f) smin = 0;
-			if (smax > by) smax = by;
+			if (smax > bz) smax = bz;
 			
 			// Snap the span to the heightfield height grid.
 			unsigned short ismin = (unsigned short)rcClamp((int)floorf(smin * ich), 0, RC_SPAN_MAX_HEIGHT);

@@ -529,8 +529,8 @@ struct rcRegion
 		visited(false),
 		overlap(false),
 		connectsToBorder(false),
-		ymin(0xffff),
-		ymax(0)
+		zmin(0xffff),
+		zmax(0)
 	{}
 	
 	int spanCount;					// Number of spans belonging to this region
@@ -540,7 +540,7 @@ struct rcRegion
 	bool visited;
 	bool overlap;
 	bool connectsToBorder;
-	unsigned short ymin, ymax;
+	unsigned short zmin, zmax;
 	rcIntArray connections;
 	rcIntArray floors;
 };
@@ -1079,8 +1079,8 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 				
 				reg.spanCount++;
 				
-				reg.ymin = rcMin(reg.ymin, s.y);
-				reg.ymax = rcMax(reg.ymax, s.y);
+				reg.zmin = rcMin(reg.zmin, s.z);
+				reg.zmax = rcMax(reg.zmax, s.z);
 				
 				// Collect all region layers.
 				lregs.push(ri);
@@ -1179,8 +1179,8 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 				// Merge current layers to root.
 				for (int k = 0; k < regn.floors.size(); ++k)
 					addUniqueFloorRegion(root, regn.floors[k]);
-				root.ymin = rcMin(root.ymin, regn.ymin);
-				root.ymax = rcMax(root.ymax, regn.ymax);
+				root.zmin = rcMin(root.zmin, regn.zmin);
+				root.zmax = rcMax(root.zmax, regn.zmax);
 				root.spanCount += regn.spanCount;
 				regn.spanCount = 0;
 				root.connectsToBorder = root.connectsToBorder || regn.connectsToBorder;

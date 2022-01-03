@@ -135,7 +135,7 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2
 	m_volumeCount = 0;
 	
 	m_mesh = new rcMeshLoaderObj;
-	m_mesh->m_flip_tris = is_tf2;
+	//m_mesh->m_flip_tris = is_tf2;
 	m_mesh->m_tf2_import_flip = is_tf2;
 	if (!m_mesh)
 	{
@@ -433,9 +433,9 @@ bool InputGeom::raycastMesh(float* src, float* dst, float& tmin)
 		return false;
 	float p[2], q[2];
 	p[0] = src[0] + (dst[0]-src[0])*btmin;
-	p[1] = src[2] + (dst[2]-src[2])*btmin;
+	p[1] = src[1] + (dst[1]-src[1])*btmin;
 	q[0] = src[0] + (dst[0]-src[0])*btmax;
-	q[1] = src[2] + (dst[2]-src[2])*btmax;
+	q[1] = src[1] + (dst[1]-src[1])*btmax;
 	
 	int cid[512];
 	const int ncid = rcGetChunksOverlappingSegment(m_chunkyMesh, p, q, cid, 512);
