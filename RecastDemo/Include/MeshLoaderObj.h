@@ -36,6 +36,8 @@ public:
 	int getTriCount() const { return m_triCount; }
 	const std::string& getFileName() const { return m_filename; }
 
+	bool m_tf2_import_flip = true;
+	bool m_flip_tris = true;
 private:
 	// Explicitly disabled copy constructor and copy assignment operator.
 	rcMeshLoaderObj(const rcMeshLoaderObj&);
@@ -52,8 +54,7 @@ private:
 	int m_vertCount;
 	int m_triCount;
 
-	bool m_tf2_import_flip = true;
-	bool m_flip_tris = true;
+	
 };
 
 #endif // MESHLOADER_OBJ

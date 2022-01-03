@@ -122,7 +122,7 @@ InputGeom::~InputGeom()
 	delete m_mesh;
 }
 		
-bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath)
+bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2)
 {
 	if (m_mesh)
 	{
@@ -135,6 +135,8 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath)
 	m_volumeCount = 0;
 	
 	m_mesh = new rcMeshLoaderObj;
+	m_mesh->m_flip_tris = is_tf2;
+	m_mesh->m_tf2_import_flip = is_tf2;
 	if (!m_mesh)
 	{
 		ctx->log(RC_LOG_ERROR, "loadMesh: Out of memory 'm_mesh'.");
@@ -163,8 +165,9 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath)
 	return true;
 }
 
-bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath)
+bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_tf2)
 {
+	//NB(warmist): tf2 not implemented here
 	char* buf = 0;
 	FILE* fp = fopen(filepath.c_str(), "rb");
 	if (!fp)
@@ -224,7 +227,7 @@ bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath)
 				name++;
 			if (*name)
 			{
-				if (!loadMesh(ctx, name))
+				if (!loadMesh(ctx, name, is_tf2))
 				{
 					delete [] buf;
 					return false;
@@ -297,7 +300,7 @@ bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath)
 	return true;
 }
 
-bool InputGeom::load(rcContext* ctx, const std::string& filepath)
+bool InputGeom::load(rcContext* ctx, const std::string& filepath,bool is_tf2)
 {
 	size_t extensionPos = filepath.find_last_of('.');
 	if (extensionPos == std::string::npos)
@@ -307,9 +310,9 @@ bool InputGeom::load(rcContext* ctx, const std::string& filepath)
 	std::transform(extension.begin(), extension.end(), extension.begin(), tolower);
 
 	if (extension == ".gset")
-		return loadGeomSet(ctx, filepath);
+		return loadGeomSet(ctx, filepath, is_tf2);
 	if (extension == ".obj")
-		return loadMesh(ctx, filepath);
+		return loadMesh(ctx, filepath, is_tf2);
 
 	return false;
 }

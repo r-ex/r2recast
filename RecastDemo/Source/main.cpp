@@ -192,7 +192,7 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
-	
+	bool tf2_transforms = true;
 	bool done = false;
 	while(!done)
 	{
@@ -200,6 +200,7 @@ int main(int /*argc*/, char** /*argv*/)
 		int mouseScroll = 0;
 		bool processHitTest = false;
 		bool processHitTestShift = false;
+		
 		SDL_Event event;
 		
 		while (SDL_PollEvent(&event))
@@ -548,6 +549,8 @@ int main(int /*argc*/, char** /*argv*/)
 			}
 			
 			imguiSeparator();
+			if (imguiCheck("Import/Export TF2", tf2_transforms, true))
+				tf2_transforms = !tf2_transforms;
 			imguiLabel("Input Mesh");
 			if (imguiButton(meshName.c_str()))
 			{
@@ -621,7 +624,10 @@ int main(int /*argc*/, char** /*argv*/)
 				{
 					newSample = g_samples[i].create();
 					if (newSample)
+					{
 						sampleName = g_samples[i].name;
+						newSample->is_tf2 = &tf2_transforms;
+					}
 				}
 			}
 			if (newSample)
@@ -694,7 +700,7 @@ int main(int /*argc*/, char** /*argv*/)
 				string path = meshesFolder + "/" + meshName;
 				
 				geom = new InputGeom;
-				if (!geom->load(&ctx, path))
+				if (!geom->load(&ctx, path,tf2_transforms))
 				{
 					delete geom;
 					geom = 0;
@@ -785,7 +791,10 @@ int main(int /*argc*/, char** /*argv*/)
 						{
 							newSample = g_samples[i].create();
 							if (newSample)
+							{
 								sampleName = g_samples[i].name;
+								newSample->is_tf2 = &tf2_transforms;
+							}
 						}
 					}
 
@@ -806,7 +815,7 @@ int main(int /*argc*/, char** /*argv*/)
 					
 					delete geom;
 					geom = new InputGeom;
-					if (!geom || !geom->load(&ctx, path))
+					if (!geom || !geom->load(&ctx, path,tf2_transforms))
 					{
 						delete geom;
 						geom = 0;

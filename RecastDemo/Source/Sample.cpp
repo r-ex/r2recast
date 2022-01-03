@@ -446,7 +446,7 @@ dtNavMesh* Sample::loadAll(const char* path)
 		fclose(fp);
 		return 0;
 	}
-	patch_headertf2(header);
+	if(*is_tf2) patch_headertf2(header);
 	dtStatus status = mesh->init(&header.params);
 	if (dtStatusFailed(status))
 	{
@@ -480,7 +480,9 @@ dtNavMesh* Sample::loadAll(const char* path)
 		}
 		dtTileRef result;
 		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, &result);
-		patch_tiletf2(const_cast<dtMeshTile*>(mesh->getTileByRef(result)));
+		auto tile = const_cast<dtMeshTile*>(mesh->getTileByRef(result));
+		if (*is_tf2) patch_tiletf2(tile);
+		tile->bvTree = nullptr;
 	}
 
 	fclose(fp);
@@ -508,7 +510,7 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 		header.numTiles++;
 	}
 	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
-	unpatch_headertf2(header);
+	if (*is_tf2)unpatch_headertf2(header);
 	fwrite(&header, sizeof(NavMeshSetHeader), 1, fp);
 
 	// Store tiles.
@@ -522,9 +524,9 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 		tileHeader.dataSize = tile->dataSize;
 		fwrite(&tileHeader, sizeof(tileHeader), 1, fp);
 
-		unpatch_tiletf2(const_cast<dtMeshTile*>(tile));
+		if (*is_tf2)unpatch_tiletf2(const_cast<dtMeshTile*>(tile));
 		fwrite(tile->data, tile->dataSize, 1, fp);
-		patch_tiletf2(const_cast<dtMeshTile*>(tile));
+		if (*is_tf2)patch_tiletf2(const_cast<dtMeshTile*>(tile));
 	}
 
 	fclose(fp);
