@@ -440,6 +440,14 @@ int main(int /*argc*/, char** /*argv*/)
 		glLoadIdentity();
 		glRotatef(cameraEulers[0], 1, 0, 0);
 		glRotatef(cameraEulers[1], 0, 1, 0);
+		float mXZY_to_XYZ[16] =
+		{
+			1,0,0,0,
+			0,0,-1,0, //tbh not sure why this is needed, the tri flips again? something is very stupid...
+			0,1,0,0,
+			0,0,0,1
+		};
+		glMultMatrixf(mXZY_to_XYZ);
 		glTranslatef(-cameraPos[0], -cameraPos[1], -cameraPos[2]);
 		GLdouble modelviewMatrix[16];
 		glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
