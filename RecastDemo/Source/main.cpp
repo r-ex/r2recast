@@ -139,7 +139,7 @@ int main(int /*argc*/, char** /*argv*/)
 	int mousePos[2] = {0, 0};
 	int origMousePos[2] = {0, 0}; // Used to compute mouse movement totals across frames.
 	
-	float cameraEulers[] = {45, -45};
+	float cameraEulers[] = {45, 45};
 	float cameraPos[] = {0, 0, 0};
 	float camr = 1000;
 	float origCameraEulers[] = {0, 0}; // Used to compute rotational changes across frames.
@@ -671,7 +671,7 @@ int main(int /*argc*/, char** /*argv*/)
 					camr *= 3;
 				}
 				cameraEulers[0] = 45;
-				cameraEulers[1] = -45;
+				cameraEulers[1] = 45;
 				glFogf(GL_FOG_START, camr*0.1f);
 				glFogf(GL_FOG_END, camr*1.25f);
 			}
@@ -869,7 +869,7 @@ int main(int /*argc*/, char** /*argv*/)
 							camr *= 3;
 						}
 						cameraEulers[0] = 45;
-						cameraEulers[1] = -45;
+						cameraEulers[1] = 45;
 						glFogf(GL_FOG_START, camr * 0.2f);
 						glFogf(GL_FOG_END, camr * 1.25f);
 					}
