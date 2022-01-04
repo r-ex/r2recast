@@ -102,7 +102,7 @@ void duDebugDrawTriMeshSlope(duDebugDraw* dd, const float* verts, int /*nverts*/
 		const float* norm = &normals[i];
 		unsigned int color;
 		unsigned char a = (unsigned char)(220*(2+norm[0]+norm[1])/4);
-		if (norm[1] < walkableThr)
+		if (norm[2] < walkableThr)
 			color = duLerpCol(duRGBA(a,a,a,255), unwalkable, 64);
 		else
 			color = duRGBA(a,a,a,255);
