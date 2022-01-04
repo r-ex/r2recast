@@ -156,11 +156,11 @@ void duDebugDrawHeightfieldSolid(duDebugDraw* dd, const rcHeightfield& hf)
 		for (int x = 0; x < w; ++x)
 		{
 			float fx = orig[0] + x*cs;
-			float fz = orig[2] + y*cs;
+			float fy = orig[1] + y*cs;
 			const rcSpan* s = hf.spans[x + y*w];
 			while (s)
 			{
-				duAppendBox(dd, fx, orig[1]+s->smin*ch, fz, fx+cs, orig[1] + s->smax*ch, fz+cs, fcol);
+				duAppendBox(dd, fx, fy, orig[2] + s->smin*ch, fx+cs,  fy+cs, orig[2] + s->smax*ch, fcol);
 				s = s->next;
 			}
 		}
