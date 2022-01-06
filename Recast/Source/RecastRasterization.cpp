@@ -280,7 +280,7 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 	{
 		// Clip polygon to row. Store the remaining polygon as well
 		const float cz = bmin[1] + y*cs;
-		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cz+cs, 2);
+		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cz+cs, 1);
 		rcSwap(in, p1);
 		if (nvrow < 3) continue;
 		
@@ -288,8 +288,8 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 		float minX = inrow[0], maxX = inrow[0];
 		for (int i=1; i<nvrow; ++i)
 		{
-			if (minX > inrow[i*3])	minX = inrow[i*3];
-			if (maxX < inrow[i*3])	maxX = inrow[i*3];
+			if (minX > inrow[i*3+0])	minX = inrow[i*3+0];
+			if (maxX < inrow[i*3+0])	maxX = inrow[i*3+0];
 		}
 		int x0 = (int)((minX - bmin[0])*ics);
 		int x1 = (int)((maxX - bmin[0])*ics);

@@ -330,8 +330,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 		float bmin[3], bmax[3];
 		dtVcopy(bmin, params->bmin);
 		dtVcopy(bmax, params->bmax);
-		bmin[1] = hmin;
-		bmax[1] = hmax;
+		bmin[2] = hmin;
+		bmax[2] = hmax;
 
 		for (int i = 0; i < params->offMeshConCount; ++i)
 		{

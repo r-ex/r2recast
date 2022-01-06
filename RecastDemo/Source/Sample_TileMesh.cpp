@@ -695,7 +695,7 @@ void Sample_TileMesh::getTilePos(const float* pos, int& tx, int& ty)
 	
 	const float ts = m_tileSize*m_cellSize;
 	tx = (int)((pos[0] - bmin[0]) / ts);
-	ty = (int)((pos[2] - bmin[2]) / ts);
+	ty = (int)((pos[1] - bmin[1]) / ts);
 }
 
 void Sample_TileMesh::removeTile(const float* pos)
@@ -708,15 +708,15 @@ void Sample_TileMesh::removeTile(const float* pos)
 
 	const float ts = m_tileSize*m_cellSize;
 	const int tx = (int)((pos[0] - bmin[0]) / ts);
-	const int ty = (int)((pos[2] - bmin[2]) / ts);
+	const int ty = (int)((pos[1] - bmin[1]) / ts);
 	
 	m_lastBuiltTileBmin[0] = bmin[0] + tx*ts;
-	m_lastBuiltTileBmin[1] = bmin[1];
-	m_lastBuiltTileBmin[2] = bmin[2] + ty*ts;
+	m_lastBuiltTileBmin[1] = bmin[1] + ty * ts;
+	m_lastBuiltTileBmin[2] = bmin[2];
 	
 	m_lastBuiltTileBmax[0] = bmin[0] + (tx+1)*ts;
-	m_lastBuiltTileBmax[1] = bmax[1];
-	m_lastBuiltTileBmax[2] = bmin[2] + (ty+1)*ts;
+	m_lastBuiltTileBmax[1] = bmin[1] + (ty + 1)*ts;
+	m_lastBuiltTileBmax[2] = bmax[2];
 	
 	m_tileCol = duRGBA(128,32,16,64);
 	
@@ -746,12 +746,12 @@ void Sample_TileMesh::buildAllTiles()
 		for (int x = 0; x < tw; ++x)
 		{
 			m_lastBuiltTileBmin[0] = bmin[0] + x*tcs;
-			m_lastBuiltTileBmin[1] = bmin[1];
-			m_lastBuiltTileBmin[2] = bmin[2] + y*tcs;
+			m_lastBuiltTileBmin[1] = bmin[1] + y * tcs;
+			m_lastBuiltTileBmin[2] = bmin[2];
 			
 			m_lastBuiltTileBmax[0] = bmin[0] + (x+1)*tcs;
-			m_lastBuiltTileBmax[1] = bmax[1];
-			m_lastBuiltTileBmax[2] = bmin[2] + (y+1)*tcs;
+			m_lastBuiltTileBmax[1] = bmin[1] + (y + 1)*tcs;
+			m_lastBuiltTileBmax[2] = bmax[2];
 			
 			int dataSize = 0;
 			unsigned char* data = buildTileMesh(x, y, m_lastBuiltTileBmin, m_lastBuiltTileBmax, dataSize);

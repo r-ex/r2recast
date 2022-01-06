@@ -276,7 +276,7 @@ dtStatus dtNavMesh::init(unsigned char* data, const int dataSize, const int flag
 	dtNavMeshParams params;
 	dtVcopy(params.orig, header->bmin);
 	params.tileWidth = header->bmax[0] - header->bmin[0];
-	params.tileHeight = header->bmax[2] - header->bmin[2];
+	params.tileHeight = header->bmax[1] - header->bmin[1];
 	params.maxTiles = 1;
 	params.maxPolys = header->polyCount;
 	
