@@ -371,11 +371,11 @@ TEST_CASE("rcCalcBounds")
 
 TEST_CASE("rcCalcGridSize")
 {
-	SECTION("computes the size of an x & z axis grid")
+	SECTION("computes the size of an x & y axis grid")
 	{
 		float verts[] = {
-			1, 2, 3,
-			0, 2, 6
+			1, 3, 2,
+			0, 6, 2
 		};
 		float bmin[3];
 		float bmax[3];
@@ -446,11 +446,11 @@ TEST_CASE("rcMarkWalkableTriangles")
 	float verts[] = {
 		0, 0, 0,
 		1, 0, 0,
-		0, 0, -1
+		0, -1,0
 	};
 	int nv = 3;
-	int walkable_tri[] = { 0, 1, 2 };
-	int unwalkable_tri[] = { 0, 2, 1 };
+	int walkable_tri[] = { 0, 2, 1 };
+	int unwalkable_tri[] = { 0, 1, 2 };
 	int nt = 1;
 	unsigned char areas[] = { RC_NULL_AREA };
 
@@ -488,11 +488,11 @@ TEST_CASE("rcClearUnwalkableTriangles")
 	float verts[] = {
 		0, 0, 0,
 		1, 0, 0,
-		0, 0, -1
+		0, -1, 0
 	};
 	int nv = 3;
-	int walkable_tri[] = { 0, 1, 2 };
-	int unwalkable_tri[] = { 0, 2, 1 };
+	int walkable_tri[] = { 0, 2, 1 };
+	int unwalkable_tri[] = { 0, 1, 2 };
 	int nt = 1;
 	unsigned char areas[] = { 42 };
 
@@ -521,8 +521,8 @@ TEST_CASE("rcAddSpan")
 	rcContext ctx(false);
 
 	float verts[] = {
-		1, 2, 3,
-		0, 2, 6
+		1, 3, 2,
+		0, 6, 2
 	};
 	float bmin[3];
 	float bmax[3];
@@ -611,7 +611,7 @@ TEST_CASE("rcRasterizeTriangle")
 	float verts[] = {
 		0, 0, 0,
 		1, 0, 0,
-		0, 0, -1
+		0, -1, 0
 	};
 	float bmin[3];
 	float bmax[3];
@@ -633,7 +633,7 @@ TEST_CASE("rcRasterizeTriangle")
 
 	SECTION("Rasterize a triangle")
 	{
-		REQUIRE(rcRasterizeTriangle(&ctx, &verts[0], &verts[3], &verts[6], area, solid, flagMergeThr));
+		REQUIRE(rcRasterizeTriangle(&ctx, &verts[0], &verts[6], &verts[3], area, solid, flagMergeThr));
 
 		REQUIRE(solid.spans[0 + 0 * width]);
 		REQUIRE(!solid.spans[1 + 0 * width]);
@@ -663,12 +663,12 @@ TEST_CASE("rcRasterizeTriangles")
 	float verts[] = {
 		0, 0, 0,
 		1, 0, 0,
-		0, 0, -1,
-		0, 0, 1
+		0, -1, 0,
+		0, 1, 0
 	};
 	int tris[] = {
-		0, 1, 2,
-		0, 3, 1
+		0, 2, 1,
+		0, 1, 3
 	};
 	unsigned char areas[] = {
 		1,
@@ -787,11 +787,11 @@ TEST_CASE("rcRasterizeTriangles")
 	{
 		float vertsList[] = {
 			0, 0, 0,
+			0, -1, 0,
 			1, 0, 0,
-			0, 0, -1,
 			0, 0, 0,
-			0, 0, 1,
 			1, 0, 0,
+			0, 1, 0,
 		};
 
 		REQUIRE(rcRasterizeTriangles(&ctx, vertsList, areas, 2, solid, flagMergeThr));
