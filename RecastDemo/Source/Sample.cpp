@@ -482,7 +482,6 @@ dtNavMesh* Sample::loadAll(const char* path)
 		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, &result);
 		auto tile = const_cast<dtMeshTile*>(mesh->getTileByRef(result));
 		if (*is_tf2) patch_tiletf2(tile);
-		tile->bvTree = nullptr;
 	}
 
 	fclose(fp);
