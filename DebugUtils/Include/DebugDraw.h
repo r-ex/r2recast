@@ -157,7 +157,9 @@ void duDebugDrawCylinder(struct duDebugDraw* dd, float minx, float miny, float m
 void duDebugDrawGridXZ(struct duDebugDraw* dd, const float ox, const float oy, const float oz,
 					   const int w, const int h, const float size,
 					   const unsigned int col, const float lineWidth);
-
+void duDebugDrawGridXY(struct duDebugDraw* dd, const float ox, const float oy, const float oz,
+	const int w, const int h, const float size,
+	const unsigned int col, const float lineWidth);
 
 // Versions without begin/end, can be used to draw multiple primitives.
 void duAppendCylinderWire(struct duDebugDraw* dd, float minx, float miny, float minz,
