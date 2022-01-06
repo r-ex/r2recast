@@ -607,6 +607,9 @@ bool Sample_TileMesh::handleBuild()
 
 	dtNavMeshParams params;
 	rcVcopy(params.orig, m_geom->getNavMeshBoundsMin());
+
+	params.orig[0] = m_geom->getNavMeshBoundsMax()[0];
+
 	params.tileWidth = m_tileSize*m_cellSize;
 	params.tileHeight = m_tileSize*m_cellSize;
 	params.maxTiles = m_maxTiles;
