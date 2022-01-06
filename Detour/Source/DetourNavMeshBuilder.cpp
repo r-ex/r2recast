@@ -226,9 +226,9 @@ static int createBVTree(dtNavMeshCreateParams* params, dtBVNode* nodes, int /*nn
 				if (y > it.bmax[1]) it.bmax[1] = y;
 				if (z > it.bmax[2]) it.bmax[2] = z;
 			}
-			// Remap y
-			it.bmin[1] = (unsigned short)dtMathFloorf((float)it.bmin[1] * params->ch / params->cs);
-			it.bmax[1] = (unsigned short)dtMathCeilf((float)it.bmax[1] * params->ch / params->cs);
+			// Remap z
+			it.bmin[2] = (unsigned short)dtMathFloorf((float)it.bmin[2] * params->ch / params->cs);
+			it.bmax[2] = (unsigned short)dtMathCeilf((float)it.bmax[2] * params->ch / params->cs);
 		}
 	}
 	
@@ -500,9 +500,9 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	{
 		const unsigned short* iv = &params->verts[i*3];
 		float* v = &navVerts[i*3];
-		v[0] = params->bmin[0] + iv[0] * params->cs;
-		v[1] = params->bmin[1] + iv[1] * params->ch;
-		v[2] = params->bmin[2] + iv[2] * params->cs;
+		v[0] = params->bmax[0] - iv[0] * params->cs;
+		v[1] = params->bmin[1] + iv[1] * params->cs;
+		v[2] = params->bmin[2] + iv[2] * params->ch;
 	}
 	// Off-mesh link vertices.
 	int n = 0;

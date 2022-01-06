@@ -124,12 +124,12 @@ static void walkContour(int x, int y, int i,
 			bool isBorderVertex = false;
 			bool isAreaBorder = false;
 			int px = x;
-			int py = getCornerHeight(x, y, i, dir, chf, isBorderVertex);
-			int pz = y;
+			int py = y;
+			int pz = getCornerHeight(x, y, i, dir, chf, isBorderVertex); 
 			switch(dir)
 			{
-				case 0: pz++; break;
-				case 1: px++; pz++; break;
+				case 0: py++; break;
+				case 1: px++; py++; break;
 				case 2: px++; break;
 			}
 			int r = 0;
