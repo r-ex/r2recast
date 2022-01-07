@@ -192,7 +192,7 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
-	bool tf2_transforms = true;
+	bool tf2_transforms = false;
 	bool done = false;
 	while(!done)
 	{
@@ -557,8 +557,8 @@ int main(int /*argc*/, char** /*argv*/)
 			}
 			
 			imguiSeparator();
-			if (imguiCheck("Import/Export TF2", tf2_transforms, true))
-				tf2_transforms = !tf2_transforms;
+			//if (imguiCheck("Import/Export TF2", tf2_transforms, true))
+			//	tf2_transforms = !tf2_transforms;
 			imguiLabel("Input Mesh");
 			if (imguiButton(meshName.c_str()))
 			{
