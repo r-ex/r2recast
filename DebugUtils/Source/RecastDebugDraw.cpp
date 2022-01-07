@@ -241,9 +241,9 @@ void duDebugDrawCompactHeightfieldSolid(duDebugDraw* dd, const rcCompactHeightfi
 				
 				const float fz = chf.bmin[2] + (s.z+1)*ch;
 				dd->vertex(fx, fy, fz, color);
+				dd->vertex(fx + cs, fy, fz, color);
+				dd->vertex(fx + cs, fy + cs, fz, color);
 				dd->vertex(fx, fy + cs, fz, color);
-				dd->vertex(fx+cs, fy + cs, fz, color);
-				dd->vertex(fx+cs, fy, fz, color);
 			}
 		}
 	}
@@ -278,9 +278,9 @@ void duDebugDrawCompactHeightfieldRegions(duDebugDraw* dd, const rcCompactHeight
 					color = duRGBA(0,0,0,64);
 
 				dd->vertex(fx, fy, fz, color);
-				dd->vertex(fx, fy, fz+cs, color);
-				dd->vertex(fx+cs, fy, fz+cs, color);
-				dd->vertex(fx+cs, fy, fz, color);
+				dd->vertex(fx + cs, fy, fz, color);
+				dd->vertex(fx + cs, fy + cs, fz, color);
+				dd->vertex(fx, fy + cs, fz, color);
 			}
 		}
 	}
@@ -318,9 +318,9 @@ void duDebugDrawCompactHeightfieldDistance(duDebugDraw* dd, const rcCompactHeigh
 				const unsigned char cd = (unsigned char)(chf.dist[i] * dscale);
 				const unsigned int color = duRGBA(cd,cd,cd,255);
 				dd->vertex(fx, fy, fz, color);
-				dd->vertex(fx, fy + cs, fz, color);
+				dd->vertex(fx + cs, fy, fz, color);
 				dd->vertex(fx+cs, fy + cs, fz, color);
-				dd->vertex(fx+cs, fy, fz, color);
+				dd->vertex(fx, fy + cs, fz, color);
 			}
 		}
 	}
@@ -354,11 +354,11 @@ static void drawLayerPortals(duDebugDraw* dd, const rcHeightfieldLayer* layer)
 				{
 					const int* seg = &segs[dir*4];
 					const float ax = layer->bmin[0] + (x+seg[0])*cs;
-					const float ay = layer->bmin[1] + (lh+2)*ch;
-					const float az = layer->bmin[2] + (y+seg[1])*cs;
+					const float ay = layer->bmin[1] + (y + seg[1])*cs;
+					const float az = layer->bmin[2] + (lh + 2)*ch;
 					const float bx = layer->bmin[0] + (x+seg[2])*cs;
-					const float by = layer->bmin[1] + (lh+2)*ch;
-					const float bz = layer->bmin[2] + (y+seg[3])*cs;
+					const float by = layer->bmin[1] + (y + seg[3])*cs;
+					const float bz = layer->bmin[2] + (lh + 2)*ch;
 					dd->vertex(ax, ay, az, pcol);
 					dd->vertex(bx, by, bz, pcol);
 				}
@@ -411,9 +411,9 @@ void duDebugDrawHeightfieldLayer(duDebugDraw* dd, const struct rcHeightfieldLaye
 			const float fz = layer.bmin[2] + y*cs;
 			
 			dd->vertex(fx, fy, fz, col);
-			dd->vertex(fx, fy, fz+cs, col);
-			dd->vertex(fx+cs, fy, fz+cs, col);
-			dd->vertex(fx+cs, fy, fz, col);
+			dd->vertex(fx + cs, fy, fz, col);
+			dd->vertex(fx + cs, fy + cs, fz, col);
+			dd->vertex(fx, fy + cs, fz, col);
 		}
 	}
 	dd->end();
@@ -662,11 +662,11 @@ static void getContourCenter(const rcContour* cont, const float* orig, float cs,
 	}
 	const float s = 1.0f / cont->nverts;
 	center[0] *= s * cs;
-	center[1] *= s * ch;
-	center[2] *= s * cs;
+	center[1] *= s * cs;
+	center[2] *= s * ch;
 	center[0] += orig[0];
-	center[1] += orig[1] + 4*ch;
-	center[2] += orig[2];
+	center[1] += orig[1];
+	center[2] += orig[2] + 4 * ch;
 }
 
 static const rcContour* findContourFromSet(const rcContourSet& cset, unsigned short reg)
