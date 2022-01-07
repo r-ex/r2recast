@@ -189,7 +189,7 @@ void duDebugDrawHeightfieldWalkable(duDebugDraw* dd, const rcHeightfield& hf)
 		for (int x = 0; x < w; ++x)
 		{
 			float fx = orig[0] + x*cs;
-			float fz = orig[2] + y*cs;
+			float fy = orig[1] + y*cs;
 			const rcSpan* s = hf.spans[x + y*w];
 			while (s)
 			{
@@ -200,7 +200,7 @@ void duDebugDrawHeightfieldWalkable(duDebugDraw* dd, const rcHeightfield& hf)
 				else
 					fcol[0] = duMultCol(dd->areaToCol(s->area), 200);
 				
-				duAppendBox(dd, fx, orig[1]+s->smin*ch, fz, fx+cs, orig[1] + s->smax*ch, fz+cs, fcol);
+				duAppendBox(dd, fx, fy, orig[2] + s->smin*ch, fx+cs, fy+cs, orig[2] + s->smax*ch, fcol);
 				s = s->next;
 			}
 		}
@@ -241,8 +241,8 @@ void duDebugDrawCompactHeightfieldSolid(duDebugDraw* dd, const rcCompactHeightfi
 				
 				const float fz = chf.bmin[2] + (s.z+1)*ch;
 				dd->vertex(fx, fy, fz, color);
-				dd->vertex(fx, fy, fz+cs, color);
-				dd->vertex(fx+cs, fy, fz+cs, color);
+				dd->vertex(fx, fy + cs, fz, color);
+				dd->vertex(fx+cs, fy + cs, fz, color);
 				dd->vertex(fx+cs, fy, fz, color);
 			}
 		}
@@ -318,8 +318,8 @@ void duDebugDrawCompactHeightfieldDistance(duDebugDraw* dd, const rcCompactHeigh
 				const unsigned char cd = (unsigned char)(chf.dist[i] * dscale);
 				const unsigned int color = duRGBA(cd,cd,cd,255);
 				dd->vertex(fx, fy, fz, color);
-				dd->vertex(fx, fy, fz+cs, color);
-				dd->vertex(fx+cs, fy, fz+cs, color);
+				dd->vertex(fx, fy + cs, fz, color);
+				dd->vertex(fx+cs, fy + cs, fz, color);
 				dd->vertex(fx+cs, fy, fz, color);
 			}
 		}
@@ -748,8 +748,8 @@ void duDebugDrawRawContours(duDebugDraw* dd, const rcContourSet& cset, const flo
 		{
 			const int* v = &c.rverts[j*4];
 			float fx = orig[0] + v[0]*cs;
-			float fy = orig[1] + (v[1]+1+(i&1))*ch;
-			float fz = orig[2] + v[2]*cs;
+			float fy = orig[1] + v[1] * cs;
+			float fz = orig[2] + (v[2] + 1 + (i & 1))*ch;
 			dd->vertex(fx,fy,fz,color);
 			if (j > 0)
 				dd->vertex(fx,fy,fz,color);
@@ -757,8 +757,8 @@ void duDebugDrawRawContours(duDebugDraw* dd, const rcContourSet& cset, const flo
 		// Loop last segment.
 		const int* v = &c.rverts[0];
 		float fx = orig[0] + v[0]*cs;
-		float fy = orig[1] + (v[1]+1+(i&1))*ch;
-		float fz = orig[2] + v[2]*cs;
+		float fy = orig[1] + v[1] * cs;
+		float fz = orig[2] + (v[2] + 1 + (i & 1))*ch;
 		dd->vertex(fx,fy,fz,color);
 	}
 	dd->end();
@@ -782,8 +782,8 @@ void duDebugDrawRawContours(duDebugDraw* dd, const rcContourSet& cset, const flo
 			}
 			
 			float fx = orig[0] + v[0]*cs;
-			float fy = orig[1] + (v[1]+1+(i&1))*ch + off;
-			float fz = orig[2] + v[2]*cs;
+			float fy = orig[1] + v[1] * cs;
+			float fz = orig[2] + (v[2] + 1 + (i & 1))*ch + off; 
 			dd->vertex(fx,fy,fz, colv);
 		}
 	}
@@ -816,12 +816,12 @@ void duDebugDrawContours(duDebugDraw* dd, const rcContourSet& cset, const float 
 			unsigned int col = (va[3] & RC_AREA_BORDER) ? bcolor : color; 
 			float fx,fy,fz;
 			fx = orig[0] + va[0]*cs;
-			fy = orig[1] + (va[1]+1+(i&1))*ch;
-			fz = orig[2] + va[2]*cs;
+			fy = orig[1] + va[1] * cs;
+			fz = orig[2] + (va[2] + 1 + (i & 1))*ch;
 			dd->vertex(fx,fy,fz, col);
 			fx = orig[0] + vb[0]*cs;
-			fy = orig[1] + (vb[1]+1+(i&1))*ch;
-			fz = orig[2] + vb[2]*cs;
+			fy = orig[1] + vb[1] * cs;
+			fz = orig[2] + (vb[2] + 1 + (i & 1))*ch;
 			dd->vertex(fx,fy,fz, col);
 		}
 	}
@@ -845,8 +845,8 @@ void duDebugDrawContours(duDebugDraw* dd, const rcContourSet& cset, const float 
 			}
 
 			float fx = orig[0] + v[0]*cs;
-			float fy = orig[1] + (v[1]+1+(i&1))*ch + off;
-			float fz = orig[2] + v[2]*cs;
+			float fy = orig[1] + v[1] * cs;
+			float fz = orig[2] + (v[2] + 1 + (i & 1))*ch + off;
 			dd->vertex(fx,fy,fz, colv);
 		}
 	}
@@ -888,8 +888,8 @@ void duDebugDrawPolyMesh(duDebugDraw* dd, const struct rcPolyMesh& mesh)
 			{
 				const unsigned short* v = &mesh.verts[vi[k]*3];
 				const float x = orig[0] + v[0]*cs;
-				const float y = orig[1] + (v[1]+1)*ch;
-				const float z = orig[2] + v[2]*cs;
+				const float y = orig[1] + v[1]*cs;
+				const float z = orig[2] + (v[2]+1)*cs;
 				dd->vertex(x,y,z, color);
 			}
 		}
@@ -913,8 +913,8 @@ void duDebugDrawPolyMesh(duDebugDraw* dd, const struct rcPolyMesh& mesh)
 			{
 				const unsigned short* v = &mesh.verts[vi[k]*3];
 				const float x = orig[0] + v[0]*cs;
-				const float y = orig[1] + (v[1]+1)*ch + 0.1f;
-				const float z = orig[2] + v[2]*cs;
+				const float y = orig[1] + v[1]*cs;
+				const float z = orig[2] + (v[2] + 1)*ch + 0.1f;
 				dd->vertex(x, y, z, coln);
 			}
 		}
@@ -941,8 +941,8 @@ void duDebugDrawPolyMesh(duDebugDraw* dd, const struct rcPolyMesh& mesh)
 			{
 				const unsigned short* v = &mesh.verts[vi[k]*3];
 				const float x = orig[0] + v[0]*cs;
-				const float y = orig[1] + (v[1]+1)*ch + 0.1f;
-				const float z = orig[2] + v[2]*cs;
+				const float y = orig[1] + v[1]*cs;
+				const float z = orig[2] + (v[2] + 1)*ch + 0.1f;
 				dd->vertex(x, y, z, col);
 			}
 		}
@@ -955,8 +955,8 @@ void duDebugDrawPolyMesh(duDebugDraw* dd, const struct rcPolyMesh& mesh)
 	{
 		const unsigned short* v = &mesh.verts[i*3];
 		const float x = orig[0] + v[0]*cs;
-		const float y = orig[1] + (v[1]+1)*ch + 0.1f;
-		const float z = orig[2] + v[2]*cs;
+		const float y = orig[1] + v[1] * cs;
+		const float z = orig[2] + (v[2] + 1)*ch + 0.1f;
 		dd->vertex(x,y,z, colv);
 	}
 	dd->end();
