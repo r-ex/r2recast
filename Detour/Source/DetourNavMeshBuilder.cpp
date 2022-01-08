@@ -249,9 +249,9 @@ static unsigned char classifyOffMeshPoint(const float* pt, const float* bmin, co
 
 	unsigned char outcode = 0; 
 	outcode |= (pt[0] >= bmax[0]) ? XP : 0;
-	outcode |= (pt[2] >= bmax[2]) ? ZP : 0;
+	outcode |= (pt[1] >= bmax[1]) ? ZP : 0;
 	outcode |= (pt[0] < bmin[0])  ? XM : 0;
-	outcode |= (pt[2] < bmin[2])  ? ZM : 0;
+	outcode |= (pt[1] < bmin[1])  ? ZM : 0;
 
 	switch (outcode)
 	{
@@ -541,11 +541,11 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 					p->neis[j] = 0;
 				else if (dir == 0) // Portal x-
 					p->neis[j] = DT_EXT_LINK | 4;
-				else if (dir == 1) // Portal z+
+				else if (dir == 1) // Portal y+
 					p->neis[j] = DT_EXT_LINK | 2;
 				else if (dir == 2) // Portal x+
 					p->neis[j] = DT_EXT_LINK | 0;
-				else if (dir == 3) // Portal z-
+				else if (dir == 3) // Portal y-
 					p->neis[j] = DT_EXT_LINK | 6;
 			}
 			else

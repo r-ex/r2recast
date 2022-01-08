@@ -458,7 +458,7 @@ static int calcAreaOfPolygon2D(const int* verts, const int nverts)
 	{
 		const int* vi = &verts[i*4];
 		const int* vj = &verts[j*4];
-		area += vi[0] * vj[2] - vj[0] * vi[2];
+		area += vi[0] * vj[1] - vj[0] * vi[1];
 	}
 	return (area+1) / 2;
 }
@@ -470,7 +470,7 @@ inline int next(int i, int n) { return i+1 < n ? i+1 : 0; }
 
 inline int area2(const int* a, const int* b, const int* c)
 {
-	return (b[0] - a[0]) * (c[2] - a[2]) - (c[0] - a[0]) * (b[2] - a[2]);
+	return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
 }
 
 //	Exclusive or: true iff exactly one argument is true.
@@ -522,7 +522,7 @@ static bool between(const int* a, const int* b, const int* c)
 	if (a[0] != b[0])
 		return	((a[0] <= c[0]) && (c[0] <= b[0])) || ((a[0] >= c[0]) && (c[0] >= b[0]));
 	else
-		return	((a[2] <= c[2]) && (c[2] <= b[2])) || ((a[2] >= c[2]) && (c[2] >= b[2]));
+		return	((a[1] <= c[1]) && (c[1] <= b[1])) || ((a[1] >= c[1]) && (c[1] >= b[1]));
 }
 
 // Returns true iff segments ab and cd intersect, properly or improperly.

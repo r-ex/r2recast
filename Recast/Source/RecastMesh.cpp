@@ -143,7 +143,7 @@ static unsigned short addVertex(unsigned short x, unsigned short y, unsigned sho
 	while (i != -1)
 	{
 		const unsigned short* v = &verts[i*3];
-		if (v[0] == x && (rcAbs(v[1] - y) <= 2) && v[2] == z)
+		if (v[0] == x && v[1] == y && (rcAbs(v[2] - z) <= 2))
 			return (unsigned short)i;
 		i = nextVert[i]; // next
 	}
@@ -460,8 +460,8 @@ static int countPolyVerts(const unsigned short* p, const int nvp)
 
 inline bool uleft(const unsigned short* a, const unsigned short* b, const unsigned short* c)
 {
-	return ((int)b[0] - (int)a[0]) * ((int)c[2] - (int)a[2]) -
-		   ((int)c[0] - (int)a[0]) * ((int)b[2] - (int)a[2]) < 0;
+	return ((int)b[0] - (int)a[0]) * ((int)c[1] - (int)a[1]) -
+		   ((int)c[0] - (int)a[0]) * ((int)b[1] - (int)a[1]) < 0;
 }
 
 static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
@@ -982,7 +982,23 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 	
 	return true;
 }
+void copy_flip_poly_mesh(unsigned short* input,unsigned short *output,int max_idx)
+{
 
+	//find actual vertex count
+	int cidx = 0;
+	for (int i = 0; i < max_idx; i++)
+		if (input[i] != 0xffff)
+			cidx++;
+		else
+			break;
+
+	//copy it out
+	for (int i = 0; i < cidx; i++)
+	{
+		output[i] = input[cidx - i-1];
+	}
+}
 /// @par
 ///
 /// @note If the mesh data is to be used to construct a Detour navigation mesh, then the upper 
@@ -1212,8 +1228,9 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 		{
 			unsigned short* p = &mesh.polys[mesh.npolys*nvp*2];
 			unsigned short* q = &polys[j*nvp];
-			for (int k = 0; k < nvp; ++k)
-				p[k] = q[k];
+			copy_flip_poly_mesh(q, p, nvp);
+			/*for (int k = 0; k < nvp; ++k)
+				p[k] = q[k];*/
 			mesh.regs[mesh.npolys] = cont.reg;
 			mesh.areas[mesh.npolys] = cont.area;
 			mesh.npolys++;
@@ -1276,11 +1293,11 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 
 				if ((int)va[0] == 0 && (int)vb[0] == 0)
 					p[nvp+j] = 0x8000 | 0;
-				else if ((int)va[2] == h && (int)vb[2] == h)
+				else if ((int)va[1] == h && (int)vb[1] == h)
 					p[nvp+j] = 0x8000 | 1;
 				else if ((int)va[0] == w && (int)vb[0] == w)
 					p[nvp+j] = 0x8000 | 2;
-				else if ((int)va[2] == 0 && (int)vb[2] == 0)
+				else if ((int)va[1] == 0 && (int)vb[1] == 0)
 					p[nvp+j] = 0x8000 | 3;
 			}
 		}
@@ -1406,18 +1423,18 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 		const rcPolyMesh* pmesh = meshes[i];
 		
 		const unsigned short ox = (unsigned short)floorf((pmesh->bmin[0]-mesh.bmin[0])/mesh.cs+0.5f);
-		const unsigned short oz = (unsigned short)floorf((pmesh->bmin[2]-mesh.bmin[2])/mesh.cs+0.5f);
+		const unsigned short oy = (unsigned short)floorf((pmesh->bmin[1]-mesh.bmin[1])/mesh.cs+0.5f);
 		
 		bool isMinX = (ox == 0);
-		bool isMinZ = (oz == 0);
+		bool isMinY = (oy == 0);
 		bool isMaxX = ((unsigned short)floorf((mesh.bmax[0] - pmesh->bmax[0]) / mesh.cs + 0.5f)) == 0;
-		bool isMaxZ = ((unsigned short)floorf((mesh.bmax[2] - pmesh->bmax[2]) / mesh.cs + 0.5f)) == 0;
-		bool isOnBorder = (isMinX || isMinZ || isMaxX || isMaxZ);
+		bool isMaxY = ((unsigned short)floorf((mesh.bmax[1] - pmesh->bmax[1]) / mesh.cs + 0.5f)) == 0;
+		bool isOnBorder = (isMinX || isMinY || isMaxX || isMaxY);
 
 		for (int j = 0; j < pmesh->nverts; ++j)
 		{
 			unsigned short* v = &pmesh->verts[j*3];
-			vremap[j] = addVertex(v[0]+ox, v[1], v[2]+oz,
+			vremap[j] = addVertex(v[0]+ox, v[1] + oy, v[2],
 								  mesh.verts, firstVert, nextVert, mesh.nverts);
 		}
 		
@@ -1448,16 +1465,16 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 								if (isMinX)
 									tgt[k] = src[k];
 								break;
-							case 1: // Portal z+
-								if (isMaxZ)
+							case 1: // Portal y+
+								if (isMaxY)
 									tgt[k] = src[k];
 								break;
 							case 2: // Portal x+
 								if (isMaxX)
 									tgt[k] = src[k];
 								break;
-							case 3: // Portal z-
-								if (isMinZ)
+							case 3: // Portal y-
+								if (isMinY)
 									tgt[k] = src[k];
 								break;
 						}

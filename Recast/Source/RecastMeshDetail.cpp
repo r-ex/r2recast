@@ -58,9 +58,9 @@ inline float vdist2(const float* p, const float* q)
 inline float vcross2(const float* p1, const float* p2, const float* p3)
 {
 	const float u1 = p2[0] - p1[0];
-	const float v1 = p2[2] - p1[2];
+	const float v1 = p2[1] - p1[1];
 	const float u2 = p3[0] - p1[0];
-	const float v2 = p3[2] - p1[2];
+	const float v2 = p3[1] - p1[1];
 	return u1 * v2 - v1 * u2;
 }
 
@@ -80,9 +80,9 @@ static bool circumCircle(const float* p1, const float* p2, const float* p3,
 		const float v1Sq = vdot2(v1,v1);
 		const float v2Sq = vdot2(v2,v2);
 		const float v3Sq = vdot2(v3,v3);
-		c[0] = (v1Sq*(v2[2]-v3[2]) + v2Sq*(v3[2]-v1[2]) + v3Sq*(v1[2]-v2[2])) / (2*cp);
-		c[1] = 0;
-		c[2] = (v1Sq*(v3[0]-v2[0]) + v2Sq*(v1[0]-v3[0]) + v3Sq*(v2[0]-v1[0])) / (2*cp);
+		c[0] = (v1Sq*(v2[1]-v3[1]) + v2Sq*(v3[1]-v1[1]) + v3Sq*(v1[1]-v2[1])) / (2*cp);
+		c[1] = (v1Sq*(v3[0] - v2[0]) + v2Sq * (v1[0] - v3[0]) + v3Sq * (v2[0] - v1[0])) / (2 * cp);
+		c[2] = 0;
 		r = vdist2(c, v1);
 		rcVadd(c, c, p1);
 		return true;
@@ -111,12 +111,12 @@ static float distPtTri(const float* p, const float* a, const float* b, const flo
 	const float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
 	float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 	
-	// If point lies inside the triangle, return interpolated y-coord.
+	// If point lies inside the triangle, return interpolated z-coord.
 	static const float EPS = 1e-4f;
 	if (u >= -EPS && v >= -EPS && (u+v) <= 1+EPS)
 	{
-		const float y = a[1] + v0[1]*u + v1[1]*v;
-		return fabsf(y-p[1]);
+		const float z = a[2] + v0[2]*u + v1[2]*v;
+		return fabsf(z-p[2]);
 	}
 	return FLT_MAX;
 }
@@ -148,11 +148,11 @@ static float distancePtSeg(const float* pt, const float* p, const float* q)
 static float distancePtSeg2d(const float* pt, const float* p, const float* q)
 {
 	float pqx = q[0] - p[0];
-	float pqz = q[2] - p[2];
+	float pqy = q[1] - p[1];
 	float dx = pt[0] - p[0];
-	float dz = pt[2] - p[2];
-	float d = pqx*pqx + pqz*pqz;
-	float t = pqx*dx + pqz*dz;
+	float dy = pt[1] - p[1];
+	float d = pqx*pqx + pqy*pqy;
+	float t = pqx*dx + pqy*dy;
 	if (d > 0)
 		t /= d;
 	if (t < 0)
@@ -161,9 +161,9 @@ static float distancePtSeg2d(const float* pt, const float* p, const float* q)
 		t = 1;
 	
 	dx = p[0] + t*pqx - pt[0];
-	dz = p[2] + t*pqz - pt[2];
+	dy = p[1] + t*pqy - pt[1];
 	
-	return dx*dx + dz*dz;
+	return dx*dx + dy*dy;
 }
 
 static float distToTriMesh(const float* p, const float* verts, const int /*nverts*/, const int* tris, const int ntris)
@@ -811,7 +811,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 				float pt[3];
 				pt[0] = x*sampleDist;
 				pt[1] = y * sampleDist;
-				pt[2] = (bmax[1] + bmin[1])*0.5f;
+				pt[2] = (bmax[2] + bmin[2])*0.5f;
 				// Make sure the samples are not too close to the edges.
 				if (distToPoly(nin,in,pt) > -sampleDist/2) continue;
 				samples.push(x);
