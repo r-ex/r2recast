@@ -321,11 +321,11 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigne
 	rcScopedTimer timer(ctx, RC_TIMER_MARK_BOX_AREA);
 
 	int minx = (int)((bmin[0]-chf.bmin[0])/chf.cs);
-	int miny = (int)((bmin[1]-chf.bmin[1])/chf.ch);
-	int minz = (int)((bmin[2]-chf.bmin[2])/chf.cs);
+	int miny = (int)((bmin[1]-chf.bmin[1])/chf.cs);
+	int minz = (int)((bmin[2]-chf.bmin[2])/chf.ch);
 	int maxx = (int)((bmax[0]-chf.bmin[0])/chf.cs);
-	int maxy = (int)((bmax[1]-chf.bmin[1])/chf.ch);
-	int maxz = (int)((bmax[2]-chf.bmin[2])/chf.cs);
+	int maxy = (int)((bmax[1]-chf.bmin[1])/chf.cs);
+	int maxz = (int)((bmax[2]-chf.bmin[2])/chf.ch);
 	
 	if (maxx < 0) return;
 	if (minx >= chf.width) return;

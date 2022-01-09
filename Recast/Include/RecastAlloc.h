@@ -333,6 +333,8 @@ public:
 	int size() const { return static_cast<int>(m_impl.size()); }
 	int& operator[](int index) { return m_impl[index]; }
 	int operator[](int index) const { return m_impl[index]; }
+	int* data() { return m_impl.data(); }
+	const int* data() const { return m_impl.data(); }
 };
 
 /// A simple helper class used to delete an array when it goes out of scope.

@@ -96,7 +96,8 @@ public:
 	virtual void collectSettings(struct BuildSettings& settings);
 	
 	void getTilePos(const float* pos, int& tx, int& ty);
-	
+	void getTileExtents(int tx, int ty, float* bmin, float* bmax);
+
 	void buildTile(const float* pos);
 	void removeTile(const float* pos);
 	void buildAllTiles();

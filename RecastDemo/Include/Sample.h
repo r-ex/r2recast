@@ -22,7 +22,14 @@
 #include "Recast.h"
 #include "SampleInterfaces.h"
 
-
+struct hulldef
+{
+	const char* name;
+	float radius;
+	float height;
+	float climb_height;
+	//TODO: voxel size, tile size
+};
 /// Tool types.
 enum SampleToolType
 {

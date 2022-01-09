@@ -184,9 +184,21 @@ void Sample::resetCommonSettings()
 	m_detailSampleMaxError = 1.0f;
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
 }
-
+hulldef hulls[2] = {
+	{"HULL_HUMAN",16,72,18},
+	{"HULL_TITAN",60,235,80},
+};
 void Sample::handleCommonSettings()
 {
+	for (auto& h : hulls)
+	{
+		if (imguiButton(h.name))
+		{
+			m_agentRadius = h.radius;
+			m_agentMaxClimb = h.climb_height;
+			m_agentHeight = h.height;
+		}
+	}
 	imguiLabel("Rasterization");
 	imguiSlider("Cell Size", &m_cellSize, 0.1f, 100.0f, 0.01f);
 	imguiSlider("Cell Height", &m_cellHeight, 0.1f, 100.0f, 0.01f);
@@ -204,8 +216,8 @@ void Sample::handleCommonSettings()
 	
 	imguiSeparator();
 	imguiLabel("Agent");
-	imguiSlider("Height", &m_agentHeight, 0.1f, 5.0f, 0.1f);
-	imguiSlider("Radius", &m_agentRadius, 0.0f, 5.0f, 0.1f);
+	imguiSlider("Height", &m_agentHeight, 0.1f, 100.0f, 0.1f);
+	imguiSlider("Radius", &m_agentRadius, 0.0f, 100.0f, 0.1f);
 	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 50.0f, 0.1f);
 	imguiSlider("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, 1.0f);
 	
@@ -236,7 +248,7 @@ void Sample::handleCommonSettings()
 	imguiLabel("Polygonization");
 	imguiSlider("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, 1.0f);
 	imguiSlider("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, 0.1f);
-	imguiSlider("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, 1.0f);		
+	imguiSlider("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, 1.0f,false);		
 
 	imguiSeparator();
 	imguiLabel("Detail Mesh");
