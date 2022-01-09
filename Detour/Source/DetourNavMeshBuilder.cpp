@@ -500,7 +500,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	{
 		const unsigned short* iv = &params->verts[i*3];
 		float* v = &navVerts[i*3];
-		v[0] = params->bmax[0] - iv[0] * params->cs;
+		//v[0] = params->bmax[0] - iv[0] * params->cs;
+		v[0] = params->bmin[0] + iv[0] * params->cs;
 		v[1] = params->bmin[1] + iv[1] * params->cs;
 		v[2] = params->bmin[2] + iv[2] * params->ch;
 	}
@@ -620,7 +621,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 				unsigned char* t = &navDTris[tbase*4];
 				t[0] = 0;
 				t[1] = (unsigned char)(j-1);
-				t[2] = (unsigned char)j;
+				t[2] = (unsigned char)(j);
 				// Bit for each edge that belongs to poly boundary.
 				t[3] = (1<<2);
 				if (j == 2) t[3] |= (1<<0);
