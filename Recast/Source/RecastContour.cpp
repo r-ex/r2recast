@@ -292,11 +292,11 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 		int ii = (i+1) % (simplified.size()/4);
 		
 		int ax = simplified[i*4+0];
-		int az = simplified[i*4+2];
+		int ay = simplified[i*4+1];
 		int ai = simplified[i*4+3];
 
 		int bx = simplified[ii*4+0];
-		int bz = simplified[ii*4+2];
+		int by = simplified[ii*4+1];
 		int bi = simplified[ii*4+3];
 
 		// Find maximum deviation from the segment.
@@ -307,7 +307,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 		// Traverse the segment in lexilogical order so that the
 		// max deviation is calculated similarly when traversing
 		// opposite segments.
-		if (bx > ax || (bx == ax && bz > az))
+		if (bx > ax || (bx == ax && by > ay))
 		{
 			cinc = 1;
 			ci = (ai+cinc) % pn;
@@ -319,7 +319,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 			ci = (bi+cinc) % pn;
 			endi = ai;
 			rcSwap(ax, bx);
-			rcSwap(az, bz);
+			rcSwap(ay, by);
 		}
 		
 		// Tessellate only outer edges or edges between areas.
@@ -328,7 +328,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 		{
 			while (ci != endi)
 			{
-				float d = distancePtSeg(points[ci*4+0], points[ci*4+2], ax, az, bx, bz);
+				float d = distancePtSeg(points[ci*4+0], points[ci*4+1], ax, ay, bx, by);
 				if (d > maxd)
 				{
 					maxd = d;
@@ -373,11 +373,11 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 			const int ii = (i+1) % (simplified.size()/4);
 			
 			const int ax = simplified[i*4+0];
-			const int az = simplified[i*4+2];
+			const int ay = simplified[i*4+1];
 			const int ai = simplified[i*4+3];
 			
 			const int bx = simplified[ii*4+0];
-			const int bz = simplified[ii*4+2];
+			const int by = simplified[ii*4+1];
 			const int bi = simplified[ii*4+3];
 			
 			// Find maximum deviation from the segment.
@@ -396,8 +396,8 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 			if (tess)
 			{
 				int dx = bx - ax;
-				int dz = bz - az;
-				if (dx*dx + dz*dz > maxEdgeLen*maxEdgeLen)
+				int dy = by - ay;
+				if (dx*dx + dy*dy > maxEdgeLen*maxEdgeLen)
 				{
 					// Round based on the segments in lexilogical order so that the
 					// max tesselation is consistent regardles in which direction
@@ -405,7 +405,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 					const int n = bi < ai ? (bi+pn - ai) : (bi - ai);
 					if (n > 1)
 					{
-						if (bx > ax || (bx == ax && bz > az))
+						if (bx > ax || (bx == ax && by > ay))
 							maxi = (ai + n/2) % pn;
 						else
 							maxi = (ai + (n+1)/2) % pn;
@@ -539,7 +539,7 @@ static bool intersect(const int* a, const int* b, const int* c, const int* d)
 
 static bool vequal(const int* a, const int* b)
 {
-	return a[0] == b[0] && a[2] == b[2];
+	return a[0] == b[0] && a[1] == b[1];
 }
 
 static bool intersectSegCountour(const int* d0, const int* d1, int i, int n, const int* verts)
