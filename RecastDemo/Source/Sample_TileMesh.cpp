@@ -678,18 +678,19 @@ void Sample_TileMesh::buildTile(const float* pos)
 	
 	m_ctx->dumpLog("Build Tile (%d,%d):", tx,ty);
 }
+
 void Sample_TileMesh::getTileExtents(int tx, int ty, float* tmin, float* tmax)
 {
 	const float ts = m_tileSize * m_cellSize;
 	const float* bmin = m_geom->getNavMeshBoundsMin();
 	const float* bmax = m_geom->getNavMeshBoundsMax();
-	//m_lastBuiltTileBmin[0] = bmax[0] - tx*ts;
-	tmin[0] = bmin[0] + tx * ts;
+	m_lastBuiltTileBmin[0] = bmax[0] - (tx+1)*ts;
+	//tmin[0] = bmin[0] + tx * ts;
 	tmin[1] = bmin[1] + ty * ts;
 	tmin[2] = bmin[2];
 
-	//m_lastBuiltTileBmax[0] = bmax[0] - (tx+1)*ts;
-	tmax[0] = bmin[0] + (tx + 1)*ts;
+	m_lastBuiltTileBmax[0] = bmax[0] - (tx)*ts;
+	//tmax[0] = bmin[0] + (tx + 1)*ts;
 	tmax[1] = bmin[1] + (ty + 1)*ts;
 	tmax[2] = bmax[2];
 }
@@ -701,8 +702,8 @@ void Sample_TileMesh::getTilePos(const float* pos, int& tx, int& ty)
 	const float* bmax = m_geom->getNavMeshBoundsMax();
 
 	const float ts = m_tileSize*m_cellSize;
-	//tx = (int)((bmax[0]- pos[0]) / ts);
-	tx = (int)((pos[0] - bmin[0]) / ts);
+	tx = (int)((bmax[0]- pos[0]) / ts);
+	//tx = (int)((pos[0] - bmin[0]) / ts);
 	ty = (int)((pos[1] - bmin[1]) / ts);
 }
 
