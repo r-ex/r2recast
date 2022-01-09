@@ -1069,7 +1069,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could build polymesh detail.");
 		return 0;
 	}
-	
+	rcFlipPolyMesh(*m_pmesh);
+	rcFlipPolyMeshDetail(*m_pmesh, *m_dmesh);
 	if (!m_keepInterResults)
 	{
 		rcFreeCompactHeightfield(m_chf);

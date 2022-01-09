@@ -1462,3 +1462,7 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 	
 	return true;
 }
+bool rcFlipPolyMeshDetail(rcPolyMesh& mesh, rcPolyMeshDetail& mdetail)
+{
+	return true;
+}

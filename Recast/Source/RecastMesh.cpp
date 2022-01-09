@@ -23,7 +23,7 @@
 #include "Recast.h"
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
-
+#include <algorithm>
 struct rcEdge
 {
 	unsigned short vert[2];
@@ -1228,9 +1228,9 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 		{
 			unsigned short* p = &mesh.polys[mesh.npolys*nvp*2];
 			unsigned short* q = &polys[j*nvp];
-			copy_flip_poly_mesh(q, p, nvp);
-			/*for (int k = 0; k < nvp; ++k)
-				p[k] = q[k];*/
+			//copy_flip_poly_mesh(q, p, nvp);
+			for (int k = 0; k < nvp; ++k)
+				p[k] = q[k];
 			mesh.regs[mesh.npolys] = cont.reg;
 			mesh.areas[mesh.npolys] = cont.area;
 			mesh.npolys++;
@@ -1565,5 +1565,52 @@ bool rcCopyPolyMesh(rcContext* ctx, const rcPolyMesh& src, rcPolyMesh& dst)
 	}
 	memcpy(dst.flags, src.flags, sizeof(unsigned short)*src.npolys);
 	
+	return true;
+}
+void shift_left(unsigned short* arr, int count)
+{
+	if (count == 0)return;
+	auto zval = arr[0];
+	for (int i = 0; i < count-1; i++)
+	{
+		arr[i] = arr[i + 1];
+	}
+	arr[count - 1] = zval;
+}
+bool rcFlipPolyMesh(rcPolyMesh& mesh)
+{
+	for (int i = 0; i < mesh.npolys; i++)
+	{
+		int max_verts = mesh.nvp;
+		auto poly_begin = mesh.polys + 2 * max_verts*i;
+		auto poly_begin_neis = mesh.polys + 2 * max_verts*i+max_verts;//i.e. every second thing in this array is poly neis
+		int cur_count = 0;
+		for (int j = 0; j < max_verts; j++)
+		{
+			if (poly_begin[j] != 0xffff)
+				cur_count++;
+			else
+				break;
+		}
+		//flip order of vertexes
+		// version A
+		///*
+		for (int j = 0; j < cur_count / 2; j++)
+		{
+			std::swap(poly_begin[j], poly_begin[cur_count - j - 1]);
+			std::swap(poly_begin_neis[j], poly_begin_neis[cur_count - j - 1]);
+			
+		}
+		shift_left(poly_begin_neis, cur_count);
+		//*/
+		// version B: leave 0'th element in same place but flip the rest
+		/*
+		for (int j = 0; j < (cur_count-1) / 2; j++)
+		{
+			std::swap(poly_begin[j+1], poly_begin[cur_count - j - 1]);
+			std::swap(poly_begin_neis[j+1], poly_begin_neis[cur_count - j - 1]);
+		}
+		*/
+	}
 	return true;
 }
