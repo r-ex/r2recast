@@ -25,7 +25,7 @@
 #include "Recast.h"
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
-
+#include <algorithm>
 
 static const unsigned RC_UNSET_HEIGHT = 0xffff;
 
@@ -40,14 +40,14 @@ struct rcHeightPatch
 
 inline float vdot2(const float* a, const float* b)
 {
-	return a[0]*b[0] + a[2]*b[2];
+	return a[0]*b[0] + a[1]*b[1];
 }
 
 inline float vdistSq2(const float* p, const float* q)
 {
 	const float dx = q[0] - p[0];
-	const float dy = q[2] - p[2];
-	return dx*dx + dy*dy;
+	const float dz = q[1] - p[1];
+	return dx*dx + dz*dz;
 }
 
 inline float vdist2(const float* p, const float* q)
@@ -191,8 +191,8 @@ static float distToPoly(int nvert, const float* verts, const float* p)
 	{
 		const float* vi = &verts[i*3];
 		const float* vj = &verts[j*3];
-		if (((vi[2] > p[2]) != (vj[2] > p[2])) &&
-			(p[0] < (vj[0]-vi[0]) * (p[2]-vi[2]) / (vj[2]-vi[2]) + vi[0]) )
+		if (((vi[1] > p[1]) != (vj[1] > p[1])) &&
+			(p[0] < (vj[0]-vi[0]) * (p[1]-vi[1]) / (vj[1]-vi[1]) + vi[0]) )
 			c = !c;
 		dmin = rcMin(dmin, distancePtSeg2d(p, vj, vi));
 	}
@@ -205,16 +205,16 @@ static unsigned short getHeight(const float fx, const float fy, const float fz,
 								const int radius, const rcHeightPatch& hp)
 {
 	int ix = (int)floorf(fx*ics + 0.01f);
-	int iz = (int)floorf(fz*ics + 0.01f);
+	int iy = (int)floorf(fy*ics + 0.01f);
 	ix = rcClamp(ix-hp.xmin, 0, hp.width - 1);
-	iz = rcClamp(iz-hp.ymin, 0, hp.height - 1);
-	unsigned short h = hp.data[ix+iz*hp.width];
+	iy = rcClamp(iy-hp.ymin, 0, hp.height - 1);
+	unsigned short h = hp.data[ix+iy*hp.width];
 	if (h == RC_UNSET_HEIGHT)
 	{
 		// Special case when data might be bad.
 		// Walk adjacent cells in a spiral up to 'radius', and look
 		// for a pixel which has a valid height.
-		int x = 1, z = 0, dx = 1, dz = 0;
+		int x = 1, y = 0, dx = 1, dy = 0;
 		int maxSize = radius * 2 + 1;
 		int maxIter = maxSize * maxSize - 1;
 
@@ -225,14 +225,14 @@ static unsigned short getHeight(const float fx, const float fy, const float fz,
 		for (int i = 0; i < maxIter; i++)
 		{
 			const int nx = ix + x;
-			const int nz = iz + z;
+			const int ny = iy + y;
 
-			if (nx >= 0 && nz >= 0 && nx < hp.width && nz < hp.height)
+			if (nx >= 0 && ny >= 0 && nx < hp.width && ny < hp.height)
 			{
-				const unsigned short nh = hp.data[nx + nz*hp.width];
+				const unsigned short nh = hp.data[nx + ny*hp.width];
 				if (nh != RC_UNSET_HEIGHT)
 				{
-					const float d = fabsf(nh*ch - fy);
+					const float d = fabsf(nh*ch - fz);
 					if (d < dmin)
 					{
 						h = nh;
@@ -267,14 +267,14 @@ static unsigned short getHeight(const float fx, const float fy, const float fz,
 				nextRingIters += 8;
 			}
 
-			if ((x == z) || ((x < 0) && (x == -z)) || ((x > 0) && (x == 1 - z)))
+			if ((x == y) || ((x < 0) && (x == -y)) || ((x > 0) && (x == 1 - y)))
 			{
 				int tmp = dx;
-				dx = -dz;
-				dz = tmp;
+				dx = -dy;
+				dy = tmp;
 			}
 			x += dx;
-			z += dz;
+			y += dy;
 		}
 	}
 	return h;
@@ -1462,7 +1462,12 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 	
 	return true;
 }
-bool rcFlipPolyMeshDetail(rcPolyMesh& mesh, rcPolyMeshDetail& mdetail)
+bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail)
 {
+	for (int i = 0; i < mdetail.ntris; i++)
+	{
+		auto tri_begin = mdetail.tris + i * 4;
+		std::swap(tri_begin[0], tri_begin[2]);
+	}
 	return true;
 }

@@ -1070,7 +1070,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		return 0;
 	}
 	rcFlipPolyMesh(*m_pmesh);
-	rcFlipPolyMeshDetail(*m_pmesh, *m_dmesh);
+	rcFlipPolyMeshDetail(*m_dmesh);
 	if (!m_keepInterResults)
 	{
 		rcFreeCompactHeightfield(m_chf);
