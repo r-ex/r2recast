@@ -69,7 +69,7 @@ static float getSlabCoord(const float* va, const int side)
 	if (side == 0 || side == 4)
 		return va[0];
 	else if (side == 2 || side == 6)
-		return va[2];
+		return va[1];
 	return 0;
 }
 
@@ -430,8 +430,8 @@ void dtNavMesh::connectExtLinks(dtMeshTile* tile, dtMeshTile* target, int side)
 					// Compress portal limits to a byte value.
 					if (dir == 0 || dir == 4)
 					{
-						float tmin = (neia[k*2+0]-va[2]) / (vb[2]-va[2]);
-						float tmax = (neia[k*2+1]-va[2]) / (vb[2]-va[2]);
+						float tmin = (neia[k*2+0]-va[1]) / (vb[1]-va[1]);
+						float tmax = (neia[k*2+1]-va[1]) / (vb[1]-va[1]);
 						if (tmin > tmax)
 							dtSwap(tmin,tmax);
 						link->bmin = (unsigned char)(dtClamp(tmin, 0.0f, 1.0f)*255.0f);
@@ -480,7 +480,7 @@ void dtNavMesh::connectExtOffMeshLinks(dtMeshTile* tile, dtMeshTile* target, int
 		if (!ref)
 			continue;
 		// findNearestPoly may return too optimistic results, further check to make sure. 
-		if (dtSqr(nearestPt[0]-p[0])+dtSqr(nearestPt[2]-p[2]) > dtSqr(targetCon->rad))
+		if (dtSqr(nearestPt[0]-p[0])+dtSqr(nearestPt[1]-p[1]) > dtSqr(targetCon->rad))
 			continue;
 		// Make sure the location is on current mesh.
 		float* v = &target->verts[targetPoly->verts[1]*3];
