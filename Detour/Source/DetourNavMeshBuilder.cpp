@@ -533,12 +533,14 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	const unsigned short* src = params->polys;
 	for (int i = 0; i < params->polyCount; ++i)
 	{
+		
 		dtPoly* p = &navPolys[i];
-		p->link_table_idx = 2; //0 is invalid 1 is special?
 		p->vertCount = 0;
 		p->flags = params->polyFlags[i];
 		p->setArea(params->polyAreas[i]);
 		p->setType(DT_POLYTYPE_GROUND);
+		//p->org=params->polys
+		p->link_table_idx = 2; //0 is invalid 1 is special?
 		for (int j = 0; j < nvp; ++j)
 		{
 			if (src[j] == MESH_NULL_IDX) break;
@@ -563,9 +565,10 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 				// Normal connection
 				p->neis[j] = src[nvp+j]+1;
 			}
-			
+			dtVadd(p->org, p->org, &navVerts[p->verts[j] * 3]);
 			p->vertCount++;
 		}
+		dtVscale(p->org, p->org, 1 / (float)(p->vertCount));
 		src += nvp*2;
 	}
 	// Off-mesh connection vertices.
