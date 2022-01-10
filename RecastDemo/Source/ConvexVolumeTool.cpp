@@ -261,7 +261,7 @@ void ConvexVolumeTool::handleRender()
 		unsigned int col = duRGBA(255,255,255,255);
 		if (i == m_npts-1)
 			col = duRGBA(240,32,16,255);
-		dd.vertex(m_pts[i*3+0],m_pts[i*3+1]+0.1f,m_pts[i*3+2], col);
+		dd.vertex(m_pts[i*3+0],m_pts[i*3+1],m_pts[i*3+2] + 0.1f, col);
 	}
 	dd.end();
 
@@ -270,12 +270,12 @@ void ConvexVolumeTool::handleRender()
 	{
 		const float* vi = &m_pts[m_hull[j]*3];
 		const float* vj = &m_pts[m_hull[i]*3];
-		dd.vertex(vj[0],minh,vj[2], duRGBA(255,255,255,64));
-		dd.vertex(vi[0],minh,vi[2], duRGBA(255,255,255,64));
-		dd.vertex(vj[0],maxh,vj[2], duRGBA(255,255,255,64));
-		dd.vertex(vi[0],maxh,vi[2], duRGBA(255,255,255,64));
-		dd.vertex(vj[0],minh,vj[2], duRGBA(255,255,255,64));
-		dd.vertex(vj[0],maxh,vj[2], duRGBA(255,255,255,64));
+		dd.vertex(vj[0],vj[1], minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vi[0], vi[1], minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0], vj[1], maxh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vi[0], vi[1], maxh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0], vj[1], minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0], vj[1], maxh, duRGBA(255,255,255,64));
 	}
 	dd.end();	
 }
