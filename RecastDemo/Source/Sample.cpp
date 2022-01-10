@@ -514,6 +514,7 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	header.magic = NAVMESHSET_MAGIC;
 	header.version = NAVMESHSET_VERSION;
 	header.numTiles = 0;
+	
 	for (int i = 0; i < mesh->getMaxTiles(); ++i)
 	{
 		dtMeshTile* tile = mesh->getTile(i);
@@ -521,6 +522,10 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 		header.numTiles++;
 	}
 	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
+	header.params.disjoint_poly_group_count = 3;
+	header.params.reachability_table_count = 1;
+	header.params.reachability_table_size = ((header.params.disjoint_poly_group_count + 31) / 32)*header.params.disjoint_poly_group_count*32;
+
 	if (*is_tf2)unpatch_headertf2(header);
 	fwrite(&header, sizeof(NavMeshSetHeader), 1, fp);
 
@@ -539,6 +544,11 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 		fwrite(tile->data, tile->dataSize, 1, fp);
 		if (*is_tf2)patch_tiletf2(const_cast<dtMeshTile*>(tile));
 	}
-
+	int header_sth[3] = { 0,0,0 };
+	fwrite(header_sth, sizeof(int), 3, fp);
+	unsigned int reachability[32*3] = { 0 };
+	for (int i = 0; i < 32*3; i++)
+		reachability[i] = 0xffffffff;
+	fwrite(reachability, sizeof(int), header.params.reachability_table_size*32, fp);
 	fclose(fp);
 }

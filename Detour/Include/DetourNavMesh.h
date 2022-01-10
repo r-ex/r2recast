@@ -263,7 +263,7 @@ struct dtMeshHeader
 	int layer;				///< The layer of the tile within the dtNavMesh tile grid. (x, y, layer)
 	unsigned int userId;	///< The user defined id of the tile.
 	int polyCount;			///< The number of polygons in the tile.
-	int what;
+	int sth_per_poly;
 	int vertCount;			///< The number of vertices in the tile.
 	int maxLinkCount;		///< The number of allocated links.
 
@@ -345,9 +345,9 @@ struct dtNavMeshParams
 	int maxPolys;					///< The maximum number of polygons each tile can contain. This and maxTiles are used to calculate how many bits are needed to identify tiles and polygons uniquely.
 //	
 //// i hate this
-	int countSth = 0;
-	int tableSize = 0;
-	int tableCount = 0;
+	int disjoint_poly_group_count = 0;
+	int reachability_table_size = 0;
+	int reachability_table_count = 0;
 
 };
 

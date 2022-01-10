@@ -733,7 +733,7 @@ void dtNavMesh::closestPointOnPoly(dtPolyRef ref, const float* pos, float* close
 	getTileAndPolyByRefUnsafe(ref, &tile, &poly);
 
 	dtVcopy(closest, pos);
-	if (getPolyHeight(tile, poly, pos, &closest[1]))
+	if (getPolyHeight(tile, poly, pos, &closest[2]))
 	{
 		if (posOverPoly)
 			*posOverPoly = true;
@@ -989,7 +989,7 @@ dtStatus dtNavMesh::addTile(unsigned char* data, int dataSize, int flags,
 	unsigned char* d = data + headerSize;
 	tile->verts = dtGetThenAdvanceBufferPointer<float>(d, vertsSize);
 	tile->polys = dtGetThenAdvanceBufferPointer<dtPoly>(d, polysSize);
-	d += header->what*header->polyCount * 4;
+	d += header->sth_per_poly*header->polyCount * 4;
 	tile->links = dtGetThenAdvanceBufferPointer<dtLink>(d, linksSize);
 	tile->detailMeshes = dtGetThenAdvanceBufferPointer<dtPolyDetail>(d, detailMeshesSize);
 	tile->detailVerts = dtGetThenAdvanceBufferPointer<float>(d, detailVertsSize);

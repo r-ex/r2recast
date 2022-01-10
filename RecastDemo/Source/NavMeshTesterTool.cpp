@@ -240,8 +240,8 @@ NavMeshTesterTool::NavMeshTesterTool() :
 	m_filter.setExcludeFlags(0);
 
 	m_polyPickExt[0] = 2;
-	m_polyPickExt[1] = 4;
-	m_polyPickExt[2] = 2;
+	m_polyPickExt[1] = 2;
+	m_polyPickExt[2] = 4;
 	
 	m_neighbourhoodRadius = 2.5f;
 	m_randomRadius = 5.0f;

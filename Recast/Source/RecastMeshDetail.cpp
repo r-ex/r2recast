@@ -1375,10 +1375,18 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		for (int j = 0; j < ntris; ++j)
 		{
 			const int* t = &tris[j*4];
+			//flipped
 			dmesh.tris[dmesh.ntris*4+0] = (unsigned char)t[0];
-			dmesh.tris[dmesh.ntris*4+1] = (unsigned char)t[1];
-			dmesh.tris[dmesh.ntris*4+2] = (unsigned char)t[2];
-			dmesh.tris[dmesh.ntris*4+3] = getTriFlags(&verts[t[0]*3], &verts[t[1]*3], &verts[t[2]*3], poly, npoly);
+			dmesh.tris[dmesh.ntris*4+1] = (unsigned char)t[2];
+			dmesh.tris[dmesh.ntris*4+2] = (unsigned char)t[1];
+			dmesh.tris[dmesh.ntris*4+3] = getTriFlags(&verts[t[0]*3], &verts[t[2]*3], &verts[t[1]*3], poly, npoly);
+			
+			/* original 
+			dmesh.tris[dmesh.ntris * 4 + 0] = (unsigned char)t[0];
+			dmesh.tris[dmesh.ntris * 4 + 1] = (unsigned char)t[1];
+			dmesh.tris[dmesh.ntris * 4 + 2] = (unsigned char)t[2];
+			dmesh.tris[dmesh.ntris * 4 + 3] = getTriFlags(&verts[t[0] * 3], &verts[t[1] * 3], &verts[t[2] * 3], poly, npoly);
+			*/
 			dmesh.ntris++;
 		}
 	}
@@ -1462,12 +1470,21 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 	
 	return true;
 }
+static unsigned char flip_flags(unsigned char flags_in)
+{
+	unsigned char flags = 0;
+	flags |= ((flags_in >>2) & 0b11) << 0;
+	flags |= ((flags_in >>0) & 0b11) << 2;
+	flags |= ((flags_in >>4) & 0b11) << 4;
+	return flags;
+}
 bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail)
 {
 	for (int i = 0; i < mdetail.ntris; i++)
 	{
 		auto tri_begin = mdetail.tris + i * 4;
 		std::swap(tri_begin[0], tri_begin[2]);
+		tri_begin[3]=flip_flags(tri_begin[3]);
 	}
 	return true;
 }

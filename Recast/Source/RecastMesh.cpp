@@ -1577,6 +1577,18 @@ void shift_left(unsigned short* arr, int count)
 	}
 	arr[count - 1] = zval;
 }
+void flip_neis_direction(unsigned short* arr, int count)
+{
+	//0<->2
+	//1<->3
+	int lkup[4] = { 2,3,0,1 };
+
+	for(int i=0;i<count;i++)
+		if (arr[i] & 0x8000)
+		{
+			arr[i] = lkup[arr[i] & 0xF] | 0x8000;
+		}
+}
 bool rcFlipPolyMesh(rcPolyMesh& mesh)
 {
 	for (int i = 0; i < mesh.npolys; i++)
@@ -1600,7 +1612,7 @@ bool rcFlipPolyMesh(rcPolyMesh& mesh)
 			
 		}
 		shift_left(poly_begin_neis, cur_count); //this is needed because the neis index edges not vertexes
-		
+		flip_neis_direction(poly_begin_neis, cur_count);
 	}
 	return true;
 }

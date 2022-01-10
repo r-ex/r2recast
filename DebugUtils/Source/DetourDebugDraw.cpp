@@ -336,7 +336,7 @@ static void drawMeshTilePortal(duDebugDraw* dd, const dtMeshTile* tile)
 {
 	// Draw portals
 	const float padx = 0.04f;
-	const float pady = tile->header->walkableClimb;
+	const float padz = tile->header->walkableClimb;
 
 	dd->begin(DU_DRAW_LINES, 2.0f);
 
@@ -366,35 +366,35 @@ static void drawMeshTilePortal(duDebugDraw* dd, const dtMeshTile* tile)
 
 					const float x = va[0] + ((side == 0) ? -padx : padx);
 					
-					dd->vertex(x,va[1]-pady,va[2], col);
-					dd->vertex(x,va[1]+pady,va[2], col);
+					dd->vertex(x, va[1], va[2] - padz, col);
+					dd->vertex(x, va[1], va[2] + padz, col);
 
-					dd->vertex(x,va[1]+pady,va[2], col);
-					dd->vertex(x,vb[1]+pady,vb[2], col);
+					dd->vertex(x, va[1], va[2] + padz, col);
+					dd->vertex(x, vb[1], vb[2] + padz, col);
 
-					dd->vertex(x,vb[1]+pady,vb[2], col);
-					dd->vertex(x,vb[1]-pady,vb[2], col);
+					dd->vertex(x, vb[1], vb[2] + padz, col);
+					dd->vertex(x, vb[1], vb[2] - padz, col);
 
-					dd->vertex(x,vb[1]-pady,vb[2], col);
-					dd->vertex(x,va[1]-pady,va[2], col);
+					dd->vertex(x, vb[1], vb[2] - padz, col);
+					dd->vertex(x, va[1], va[2] - padz, col);
 				}
 				else if (side == 2 || side == 6)
 				{
 					unsigned int col = side == 2 ? duRGBA(0,128,0,128) : duRGBA(0,128,128,128);
 
-					const float z = va[2] + ((side == 2) ? -padx : padx);
+					const float y = va[1] + ((side == 2) ? -padx : padx);
 					
-					dd->vertex(va[0],va[1]-pady,z, col);
-					dd->vertex(va[0],va[1]+pady,z, col);
-					
-					dd->vertex(va[0],va[1]+pady,z, col);
-					dd->vertex(vb[0],vb[1]+pady,z, col);
-					
-					dd->vertex(vb[0],vb[1]+pady,z, col);
-					dd->vertex(vb[0],vb[1]-pady,z, col);
-					
-					dd->vertex(vb[0],vb[1]-pady,z, col);
-					dd->vertex(va[0],va[1]-pady,z, col);
+					dd->vertex(va[0], y, va[2] - padz, col);
+					dd->vertex(va[0], y, va[2] + padz, col);
+
+					dd->vertex(va[0], y, va[2] + padz, col);
+					dd->vertex(vb[0], y, vb[2] + padz, col);
+
+					dd->vertex(vb[0], y, vb[2] + padz, col);
+					dd->vertex(vb[0], y, vb[2] - padz, col);
+
+					dd->vertex(vb[0], y, vb[2] - padz, col);
+					dd->vertex(va[0], y, va[2] - padz, col);
 				}
 
 			}

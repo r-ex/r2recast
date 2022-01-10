@@ -989,7 +989,7 @@ void duDebugDrawPolyMeshDetail(duDebugDraw* dd, const struct rcPolyMeshDetail& d
 	dd->end();
 
 	// Internal edges.
-	dd->begin(DU_DRAW_LINES, 1.0f);
+	dd->begin(DU_DRAW_LINES, 0.8f);
 	const unsigned int coli = duRGBA(0,0,0,64);
 	for (int i = 0; i < dmesh.nmeshes; ++i)
 	{
@@ -1021,7 +1021,7 @@ void duDebugDrawPolyMeshDetail(duDebugDraw* dd, const struct rcPolyMeshDetail& d
 	dd->end();
 	
 	// External edges.
-	dd->begin(DU_DRAW_LINES, 2.0f);
+	dd->begin(DU_DRAW_LINES, 2.5f);
 	const unsigned int cole = duRGBA(0,0,0,64);
 	for (int i = 0; i < dmesh.nmeshes; ++i)
 	{

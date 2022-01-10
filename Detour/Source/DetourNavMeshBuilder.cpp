@@ -491,6 +491,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	header->offMeshConCount = storedOffMeshConCount;
 	header->bvNodeCount = params->buildBvTree ? params->polyCount*2 : 0;
 	
+	header->sth_per_poly = 0;
+
 	const int offMeshVertsBase = params->vertCount;
 	const int offMeshPolyBase = params->polyCount;
 	
@@ -526,6 +528,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	for (int i = 0; i < params->polyCount; ++i)
 	{
 		dtPoly* p = &navPolys[i];
+		p->link_table_idx = 2; //0 is invalid 1 is special?
 		p->vertCount = 0;
 		p->flags = params->polyFlags[i];
 		p->setArea(params->polyAreas[i]);

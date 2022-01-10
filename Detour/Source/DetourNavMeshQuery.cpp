@@ -613,7 +613,7 @@ dtStatus dtNavMeshQuery::getPolyHeight(dtPolyRef ref, const float* pos, float* h
 		float t;
 		dtDistancePtSegSqr2D(pos, v0, v1, t);
 		if (height)
-			*height = v0[1] + (v1[1] - v0[1])*t;
+			*height = v0[2] + (v1[2] - v0[2])*t;
 
 		return DT_SUCCESS;
 	}
@@ -660,7 +660,7 @@ public:
 			dtVsub(diff, m_center, closestPtPoly);
 			if (posOverPoly)
 			{
-				d = dtAbs(diff[1]) - tile->header->walkableClimb;
+				d = dtAbs(diff[2]) - tile->header->walkableClimb;
 				d = d > 0 ? d*d : 0;			
 			}
 			else

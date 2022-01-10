@@ -170,17 +170,17 @@ bool dtIntersectSegmentPoly2D(const float* p0, const float* p1,
 float dtDistancePtSegSqr2D(const float* pt, const float* p, const float* q, float& t)
 {
 	float pqx = q[0] - p[0];
-	float pqz = q[2] - p[2];
+	float pqy = q[1] - p[1];
 	float dx = pt[0] - p[0];
-	float dz = pt[2] - p[2];
-	float d = pqx*pqx + pqz*pqz;
-	t = pqx*dx + pqz*dz;
+	float dy = pt[1] - p[1];
+	float d = pqx*pqx + pqy*pqy;
+	t = pqx*dx + pqy*dy;
 	if (d > 0) t /= d;
 	if (t < 0) t = 0;
 	else if (t > 1) t = 1;
 	dx = p[0] + t*pqx - pt[0];
-	dz = p[2] + t*pqz - pt[2];
-	return dx*dx + dz*dz;
+	dy = p[1] + t*pqy - pt[1];
+	return dx*dx + dy*dy;
 }
 
 void dtCalcPolyCenter(float* tc, const unsigned short* idx, int nidx, const float* verts)
@@ -211,12 +211,12 @@ bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b
 	dtVsub(v2, p, a);
 
 	// Compute scaled barycentric coordinates
-	float denom = v0[0] * v1[2] - v0[2] * v1[0];
+	float denom = v0[0] * v1[1] - v0[1] * v1[0];
 	if (fabsf(denom) < EPS)
 		return false;
 
-	float u = v1[2] * v2[0] - v1[0] * v2[2];
-	float v = v0[0] * v2[2] - v0[2] * v2[0];
+	float u = v1[1] * v2[0] - v1[0] * v2[1];
+	float v = v0[0] * v2[1] - v0[1] * v2[0];
 
 	if (denom < 0) {
 		denom = -denom;
@@ -226,7 +226,7 @@ bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b
 
 	// If point lies inside the triangle, return interpolated ycoord.
 	if (u >= 0.0f && v >= 0.0f && (u + v) <= denom) {
-		h = a[1] + (v0[1] * u + v1[1] * v) / denom;
+		h = a[2] + (v0[2] * u + v1[2] * v) / denom;
 		return true;
 	}
 	return false;
@@ -234,7 +234,7 @@ bool dtClosestHeightPointTriangle(const float* p, const float* a, const float* b
 
 /// @par
 ///
-/// All points are projected onto the xz-plane, so the y-values are ignored.
+/// All points are projected onto the xy-plane, so the z-values are ignored.
 bool dtPointInPolygon(const float* pt, const float* verts, const int nverts)
 {
 	// TODO: Replace pnpoly with triArea2D tests?
@@ -244,8 +244,8 @@ bool dtPointInPolygon(const float* pt, const float* verts, const int nverts)
 	{
 		const float* vi = &verts[i*3];
 		const float* vj = &verts[j*3];
-		if (((vi[2] > pt[2]) != (vj[2] > pt[2])) &&
-			(pt[0] < (vj[0]-vi[0]) * (pt[2]-vi[2]) / (vj[2]-vi[2]) + vi[0]) )
+		if (((vi[1] > pt[1]) != (vj[1] > pt[1])) &&
+			(pt[0] < (vj[0]-vi[0]) * (pt[1]-vi[1]) / (vj[1]-vi[1]) + vi[0]) )
 			c = !c;
 	}
 	return c;
@@ -261,8 +261,8 @@ bool dtDistancePtPolyEdgesSqr(const float* pt, const float* verts, const int nve
 	{
 		const float* vi = &verts[i*3];
 		const float* vj = &verts[j*3];
-		if (((vi[2] > pt[2]) != (vj[2] > pt[2])) &&
-			(pt[0] < (vj[0]-vi[0]) * (pt[2]-vi[2]) / (vj[2]-vi[2]) + vi[0]) )
+		if (((vi[1] > pt[1]) != (vj[1] > pt[1])) &&
+			(pt[0] < (vj[0]-vi[0]) * (pt[1]-vi[1]) / (vj[1]-vi[1]) + vi[0]) )
 			c = !c;
 		ed[j] = dtDistancePtSegSqr2D(pt, vj, vi, et[j]);
 	}

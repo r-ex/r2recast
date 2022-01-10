@@ -1062,7 +1062,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'dmesh'.");
 		return 0;
 	}
-	
+	rcFlipPolyMesh(*m_pmesh);
 	if (!rcBuildPolyMeshDetail(m_ctx, *m_pmesh, *m_chf,
 							   m_cfg.detailSampleDist, m_cfg.detailSampleMaxError,
 							   *m_dmesh))
@@ -1070,8 +1070,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could build polymesh detail.");
 		return 0;
 	}
-	rcFlipPolyMesh(*m_pmesh);
-	//rcFlipPolyMeshDetail(*m_dmesh); //NB(warmist): wtf, if we flip detail, it displays ok, but builds navmesh wrong...
+	
+	rcFlipPolyMeshDetail(*m_dmesh); //NB(warmist): wtf, if we flip detail, it displays ok, but builds navmesh wrong...
 	if (!m_keepInterResults)
 	{
 		rcFreeCompactHeightfield(m_chf);
@@ -1122,7 +1122,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.polyFlags = m_pmesh->flags;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
-		params.detailMeshes = m_dmesh->meshes;
+		params.detailMeshes = nullptr;// m_dmesh->meshes;
 		params.detailVerts = m_dmesh->verts;
 		params.detailVertsCount = m_dmesh->nverts;
 		params.detailTris = m_dmesh->tris;
@@ -1144,7 +1144,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		rcVcopy(params.bmax, m_pmesh->bmax);
 		params.cs = m_cfg.cs;
 		params.ch = m_cfg.ch;
-		params.buildBvTree = true;
+		params.buildBvTree = false;
 		
 		if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
 		{
