@@ -1577,17 +1577,43 @@ void shift_left(unsigned short* arr, int count)
 	}
 	arr[count - 1] = zval;
 }
-void flip_neis_direction(unsigned short* arr, int count)
+void flip_neis_direction(rcPolyMesh& mesh,unsigned short* arr, int count)
 {
-	//0<->2
-	//1<->3
-	int lkup[4] = { 2,3,0,1 };
+	//int lkup[4] = { 0,1,2,3 }; //NOOP
+	int lkup[4] = { 2,1,0,3 };// flip x only
+	//int lkup[4] = { 0,3,2,1 }; //flip y only
+	//int lkup[4] = { 2,3,0,1 };  //flip x and y
+	//int lkup[4] = { 3,0,1,2 }; //exchange x/y (90 deg)
+	//int lkup[4] = { 1,2,3,0 }; //-90 deg
+	//int lkup[4] = { 2,3,0,1 }; //180 deg
 
+	
 	for(int i=0;i<count;i++)
-		if (arr[i] & 0x8000)
+		if ((arr[i] & 0x8000) && (arr[i] != 0xffff))
 		{
 			arr[i] = lkup[arr[i] & 0xF] | 0x8000;
 		}
+	/* original code for reference
+	cur.x ==0 && next.x ==0 -> 0
+	cur.y ==h && next.x ==h -> 1
+	cur.x ==w && next.x ==w -> 2
+	cur.y ==0 && next.y ==0 -> 3
+
+		   3
+		  ###
+		0 ### 2
+		  ###
+		   1
+	
+	if ((int)va[0] == 0 && (int)vb[0] == 0)
+		p[nvp+j] = 0x8000 | 0;
+	else if ((int)va[1] == h && (int)vb[1] == h)
+		p[nvp+j] = 0x8000 | 1;
+	else if ((int)va[0] == w && (int)vb[0] == w)
+		p[nvp+j] = 0x8000 | 2;
+	else if ((int)va[1] == 0 && (int)vb[1] == 0)
+		p[nvp+j] = 0x8000 | 3;
+	*/
 }
 bool rcFlipPolyMesh(rcPolyMesh& mesh)
 {
@@ -1612,7 +1638,7 @@ bool rcFlipPolyMesh(rcPolyMesh& mesh)
 			
 		}
 		shift_left(poly_begin_neis, cur_count); //this is needed because the neis index edges not vertexes
-		flip_neis_direction(poly_begin_neis, cur_count);
+		flip_neis_direction(mesh,poly_begin_neis, cur_count);
 	}
 	return true;
 }

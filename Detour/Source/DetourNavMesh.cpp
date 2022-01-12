@@ -77,19 +77,19 @@ static void calcSlabEndPoints(const float* va, const float* vb, float* bmin, flo
 {
 	if (side == 0 || side == 4)
 	{
-		if (va[2] < vb[2])
+		if (va[1] < vb[1])
 		{
-			bmin[0] = va[2];
-			bmin[1] = va[1];
-			bmax[0] = vb[2];
-			bmax[1] = vb[1];
+			bmin[0] = va[1];
+			bmin[1] = va[2];
+			bmax[0] = vb[1];
+			bmax[1] = vb[2];
 		}
 		else
 		{
-			bmin[0] = vb[2];
-			bmin[1] = vb[1];
-			bmax[0] = va[2];
-			bmax[1] = va[1];
+			bmin[0] = vb[1];
+			bmin[1] = vb[2];
+			bmax[0] = va[1];
+			bmax[1] = va[2];
 		}
 	}
 	else if (side == 2 || side == 6)
@@ -97,16 +97,16 @@ static void calcSlabEndPoints(const float* va, const float* vb, float* bmin, flo
 		if (va[0] < vb[0])
 		{
 			bmin[0] = va[0];
-			bmin[1] = va[1];
+			bmin[1] = va[2];
 			bmax[0] = vb[0];
-			bmax[1] = vb[1];
+			bmax[1] = vb[2];
 		}
 		else
 		{
 			bmin[0] = vb[0];
-			bmin[1] = vb[1];
+			bmin[1] = vb[2];
 			bmax[0] = va[0];
-			bmax[1] = va[1];
+			bmax[1] = va[2];
 		}
 	}
 }
