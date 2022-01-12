@@ -211,7 +211,8 @@ struct dtLink
 	unsigned char side;				///< If a boundary link, defines on which side the link is.
 	unsigned char bmin;				///< If a boundary link, defines the minimum sub-edge area.
 	unsigned char bmax;				///< If a boundary link, defines the maximum sub-edge area.
-	unsigned int nah;
+	unsigned char flags;
+	unsigned char pad[3];
 };
 
 /// Bounding volume node.

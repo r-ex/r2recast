@@ -426,6 +426,7 @@ void dtNavMesh::connectExtLinks(dtMeshTile* tile, dtMeshTile* target, int side)
 					
 					link->next = poly->firstLink;
 					poly->firstLink = idx;
+					link->flags = 0xff;
 
 					// Compress portal limits to a byte value.
 					if (dir == 0 || dir == 4)
