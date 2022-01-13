@@ -684,12 +684,12 @@ void Sample_TileMesh::getTileExtents(int tx, int ty, float* tmin, float* tmax)
 	const float ts = m_tileSize * m_cellSize;
 	const float* bmin = m_geom->getNavMeshBoundsMin();
 	const float* bmax = m_geom->getNavMeshBoundsMax();
-	m_lastBuiltTileBmin[0] = bmax[0] - (tx+1)*ts;
+	tmin[0] = bmax[0] - (tx+1)*ts;
 	//tmin[0] = bmin[0] + tx * ts;
 	tmin[1] = bmin[1] + ty * ts;
 	tmin[2] = bmin[2];
 
-	m_lastBuiltTileBmax[0] = bmax[0] - (tx)*ts;
+	tmax[0] = bmax[0] - (tx)*ts;
 	//tmax[0] = bmin[0] + (tx + 1)*ts;
 	tmax[1] = bmin[1] + (ty + 1)*ts;
 	tmax[2] = bmax[2];
@@ -1071,7 +1071,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		return 0;
 	}
 	
-	rcFlipPolyMeshDetail(*m_dmesh); //NB(warmist): wtf, if we flip detail, it displays ok, but builds navmesh wrong...
+	//rcFlipPolyMeshDetail(*m_dmesh); //NB(warmist): wtf, if we flip detail, it displays ok, but builds navmesh wrong...
 	if (!m_keepInterResults)
 	{
 		rcFreeCompactHeightfield(m_chf);
@@ -1122,7 +1122,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.polyFlags = m_pmesh->flags;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
-		params.detailMeshes = nullptr;// m_dmesh->meshes;
+		params.detailMeshes = m_dmesh->meshes;
 		params.detailVerts = m_dmesh->verts;
 		params.detailVertsCount = m_dmesh->nverts;
 		params.detailTris = m_dmesh->tris;
@@ -1144,7 +1144,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		rcVcopy(params.bmax, m_pmesh->bmax);
 		params.cs = m_cfg.cs;
 		params.ch = m_cfg.ch;
-		params.buildBvTree = false;
+		params.buildBvTree = true;
 		
 		if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
 		{
