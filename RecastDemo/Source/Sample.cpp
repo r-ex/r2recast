@@ -183,13 +183,17 @@ void Sample::resetCommonSettings()
 	m_detailSampleDist = 6.0f;
 	m_detailSampleMaxError = 1.0f;
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
+	m_count_reachability_tables = 1;
 }
-hulldef hulls[2] = {
+hulldef hulls[4] = {
 	{"HULL_HUMAN",16,72,18,512.0f},
+	{"HULL_MED_SHORT",40,72,18,512.0f},
+	{"HULL_MEDIUM",48,150,32,512.0f},
 	{"HULL_TITAN",60,235,80,960.0f},
 };
 void Sample::handleCommonSettings()
 {
+	bool is_human = true;
 	for (auto& h : hulls)
 	{
 		if (imguiButton(h.name))
@@ -197,8 +201,10 @@ void Sample::handleCommonSettings()
 			m_agentRadius = h.radius;
 			m_agentMaxClimb = h.climb_height;
 			m_agentHeight = h.height;
-
+			if (is_human)
+				m_count_reachability_tables = 4;
 		}
+		is_human = false;
 	}
 	imguiLabel("Rasterization");
 	imguiSlider("Cell Size", &m_cellSize, 0.1f, 100.0f, 0.01f);
@@ -524,7 +530,7 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	}
 	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
 	header.params.disjoint_poly_group_count = 3;
-	header.params.reachability_table_count = 1;
+	header.params.reachability_table_count = m_count_reachability_tables;
 	header.params.reachability_table_size = ((header.params.disjoint_poly_group_count + 31) / 32)*header.params.disjoint_poly_group_count*32;
 
 	if (*is_tf2)unpatch_headertf2(header);
@@ -547,9 +553,10 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	}
 	int header_sth[3] = { 0,0,0 };
 	fwrite(header_sth, sizeof(int), 3, fp);
-	unsigned int reachability[32*3] = { 0 };
+	unsigned int reachability[32*3];
 	for (int i = 0; i < 32*3; i++)
 		reachability[i] = 0xffffffff;
-	fwrite(reachability, sizeof(int), header.params.reachability_table_size*32, fp);
+	for(int i=0;i< header.params.reachability_table_count;i++)
+		fwrite(reachability, sizeof(int), (header.params.reachability_table_size/4), fp);
 	fclose(fp);
 }

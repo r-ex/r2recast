@@ -129,6 +129,7 @@ protected:
 	float m_detailSampleDist;
 	float m_detailSampleMaxError;
 	int m_partitionType;
+	int m_count_reachability_tables;
 
 	bool m_filterLowHangingObstacles;
 	bool m_filterLedgeSpans;

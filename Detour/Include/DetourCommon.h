@@ -235,28 +235,28 @@ inline float dtVdistSqr(const float* v1, const float* v2)
 	return dx*dx + dy*dy + dz*dz;
 }
 
-/// Derives the distance between the specified points on the xz-plane.
+/// Derives the distance between the specified points on the xy-plane.
 ///  @param[in]		v1	A point. [(x, y, z)]
 ///  @param[in]		v2	A point. [(x, y, z)]
-/// @return The distance between the point on the xz-plane.
+/// @return The distance between the point on the xy-plane.
 ///
-/// The vectors are projected onto the xz-plane, so the y-values are ignored.
+/// The vectors are projected onto the xy-plane, so the z-values are ignored.
 inline float dtVdist2D(const float* v1, const float* v2)
 {
 	const float dx = v2[0] - v1[0];
-	const float dz = v2[2] - v1[2];
-	return dtMathSqrtf(dx*dx + dz*dz);
+	const float dy = v2[1] - v1[1];
+	return dtMathSqrtf(dx*dx + dy*dy);
 }
 
-/// Derives the square of the distance between the specified points on the xz-plane.
+/// Derives the square of the distance between the specified points on the xy-plane.
 ///  @param[in]		v1	A point. [(x, y, z)]
 ///  @param[in]		v2	A point. [(x, y, z)]
-/// @return The square of the distance between the point on the xz-plane.
+/// @return The square of the distance between the point on the xy-plane.
 inline float dtVdist2DSqr(const float* v1, const float* v2)
 {
 	const float dx = v2[0] - v1[0];
-	const float dz = v2[2] - v1[2];
-	return dx*dx + dz*dz;
+	const float dy = v2[1] - v1[1];
+	return dx*dx + dy*dy;
 }
 
 /// Normalizes the vector.
@@ -308,41 +308,41 @@ inline bool dtVisfinite2D(const float* v)
 /// Derives the dot product of two vectors on the xz-plane. (@p u . @p v)
 ///  @param[in]		u		A vector [(x, y, z)]
 ///  @param[in]		v		A vector [(x, y, z)]
-/// @return The dot product on the xz-plane.
+/// @return The dot product on the xy-plane.
 ///
-/// The vectors are projected onto the xz-plane, so the y-values are ignored.
+/// The vectors are projected onto the xy-plane, so the z-values are ignored.
 inline float dtVdot2D(const float* u, const float* v)
 {
-	return u[0]*v[0] + u[2]*v[2];
+	return u[0]*v[0] + u[1]*v[1];
 }
 
-/// Derives the xz-plane 2D perp product of the two vectors. (uz*vx - ux*vz)
+/// Derives the xy-plane 2D perp product of the two vectors. (uy*vx - ux*vy)
 ///  @param[in]		u		The LHV vector [(x, y, z)]
 ///  @param[in]		v		The RHV vector [(x, y, z)]
-/// @return The dot product on the xz-plane.
+/// @return The dot product on the xy-plane.
 ///
-/// The vectors are projected onto the xz-plane, so the y-values are ignored.
+/// The vectors are projected onto the xy-plane, so the z-values are ignored.
 inline float dtVperp2D(const float* u, const float* v)
 {
-	return u[2]*v[0] - u[0]*v[2];
+	return u[1]*v[0] - u[0]*v[1];
 }
 
 /// @}
 /// @name Computational geometry helper functions.
 /// @{
 
-/// Derives the signed xz-plane area of the triangle ABC, or the relationship of line AB to point C.
+/// Derives the signed xy-plane area of the triangle ABC, or the relationship of line AB to point C.
 ///  @param[in]		a		Vertex A. [(x, y, z)]
 ///  @param[in]		b		Vertex B. [(x, y, z)]
 ///  @param[in]		c		Vertex C. [(x, y, z)]
-/// @return The signed xz-plane area of the triangle.
+/// @return The signed xy-plane area of the triangle.
 inline float dtTriArea2D(const float* a, const float* b, const float* c)
 {
 	const float abx = b[0] - a[0];
-	const float abz = b[2] - a[2];
+	const float aby = b[1] - a[1];
 	const float acx = c[0] - a[0];
-	const float acz = c[2] - a[2];
-	return acx*abz - abx*acz;
+	const float acy = c[1] - a[1];
+	return acx*aby - abx*acy;
 }
 
 /// Determines if two axis-aligned bounding boxes overlap.
