@@ -185,8 +185,8 @@ void Sample::resetCommonSettings()
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
 }
 hulldef hulls[2] = {
-	{"HULL_HUMAN",16,72,18},
-	{"HULL_TITAN",60,235,80},
+	{"HULL_HUMAN",16,72,18,512.0f},
+	{"HULL_TITAN",60,235,80,960.0f},
 };
 void Sample::handleCommonSettings()
 {
@@ -197,6 +197,7 @@ void Sample::handleCommonSettings()
 			m_agentRadius = h.radius;
 			m_agentMaxClimb = h.climb_height;
 			m_agentHeight = h.height;
+
 		}
 	}
 	imguiLabel("Rasterization");

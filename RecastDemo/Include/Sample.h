@@ -28,6 +28,8 @@ struct hulldef
 	float radius;
 	float height;
 	float climb_height;
+
+	float tile_size;
 	//TODO: voxel size, tile size
 };
 /// Tool types.
