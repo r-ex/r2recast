@@ -275,7 +275,7 @@ void duDebugDrawNavMeshNodes(struct duDebugDraw* dd, const dtNavMeshQuery& query
 			{
 				const dtNode* node = pool->getNodeAtIdx(j+1);
 				if (!node) continue;
-				dd->vertex(node->pos[0],node->pos[1]+off,node->pos[2], duRGBA(255,192,0,255));
+				dd->vertex(node->pos[0],node->pos[1],node->pos[2] + off, duRGBA(255,192,0,255));
 			}
 		}
 		dd->end();
@@ -290,8 +290,8 @@ void duDebugDrawNavMeshNodes(struct duDebugDraw* dd, const dtNavMeshQuery& query
 				if (!node->pidx) continue;
 				const dtNode* parent = pool->getNodeAtIdx(node->pidx);
 				if (!parent) continue;
-				dd->vertex(node->pos[0],node->pos[1]+off,node->pos[2], duRGBA(255,192,0,128));
-				dd->vertex(parent->pos[0],parent->pos[1]+off,parent->pos[2], duRGBA(255,192,0,128));
+				dd->vertex(node->pos[0],node->pos[1],node->pos[2] + off, duRGBA(255,192,0,128));
+				dd->vertex(parent->pos[0],parent->pos[1],parent->pos[2] + off, duRGBA(255,192,0,128));
 			}
 		}
 		dd->end();
