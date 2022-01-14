@@ -302,6 +302,8 @@ int dtNavMesh::findConnectingPolys(const float* va, const float* vb,
 								   const dtMeshTile* tile, int side,
 								   dtPolyRef* con, float* conarea, int maxcon) const
 {
+	const float near_thresh = 0.01f;
+
 	if (!tile) return 0;
 	
 	float amin[2], amax[2];
@@ -329,13 +331,13 @@ int dtNavMesh::findConnectingPolys(const float* va, const float* vb,
 			const float bpos = getSlabCoord(vc, side);
 			
 			// Segments are not close enough.
-			if (dtAbs(apos-bpos) > 0.01f)
+			if (dtAbs(apos-bpos) > near_thresh)
 				continue;
 			
 			// Check if the segments touch.
 			calcSlabEndPoints(vc,vd, bmin,bmax, side);
 			
-			if (!overlapSlabs(amin,amax, bmin,bmax, 0.01f, tile->header->walkableClimb)) continue;
+			if (!overlapSlabs(amin,amax, bmin,bmax, near_thresh, tile->header->walkableClimb)) continue;
 			
 			// Add return value.
 			if (n < maxcon)
@@ -583,7 +585,7 @@ void dtNavMesh::baseOffMeshLinks(dtMeshTile* tile)
 		dtPolyRef ref = findNearestPolyInTile(tile, p, halfExtents, nearestPt);
 		if (!ref) continue;
 		// findNearestPoly may return too optimistic results, further check to make sure. 
-		if (dtSqr(nearestPt[0]-p[0])+dtSqr(nearestPt[2]-p[2]) > dtSqr(con->rad))
+		if (dtSqr(nearestPt[0]-p[0])+dtSqr(nearestPt[1]-p[1]) > dtSqr(con->rad))
 			continue;
 		// Make sure the location is on current mesh.
 		float* v = &tile->verts[poly->verts[0]*3];

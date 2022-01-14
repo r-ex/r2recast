@@ -206,7 +206,7 @@ static bool getSteerTarget(dtNavMeshQuery* navQuery, const float* startPos, cons
 		return false;
 	
 	dtVcopy(steerPos, &steerPath[ns*3]);
-	steerPos[1] = startPos[1];
+	steerPos[2] = startPos[2];
 	steerPosFlag = steerPathFlags[ns];
 	steerPosRef = steerPathPolys[ns];
 	
@@ -768,7 +768,7 @@ void NavMeshTesterTool::recalc()
 
 					float h = 0;
 					m_navQuery->getPolyHeight(polys[0], result, &h);
-					result[1] = h;
+					result[2] = h;
 					dtVcopy(iterPos, result);
 
 					// Handle end of path and off-mesh links when close enough.
@@ -820,7 +820,7 @@ void NavMeshTesterTool::recalc()
 							dtVcopy(iterPos, endPos);
 							float eh = 0.0f;
 							m_navQuery->getPolyHeight(polys[0], iterPos, &eh);
-							iterPos[1] = eh;
+							iterPos[2] = eh;
 						}
 					}
 					
@@ -924,7 +924,7 @@ void NavMeshTesterTool::recalc()
 			{
 				float h = 0;
 				m_navQuery->getPolyHeight(m_polys[m_npolys-1], m_hitPos, &h);
-				m_hitPos[1] = h;
+				m_hitPos[2] = h;
 			}
 			dtVcopy(&m_straightPath[3], m_hitPos);
 		}

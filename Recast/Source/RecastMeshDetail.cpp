@@ -46,8 +46,8 @@ inline float vdot2(const float* a, const float* b)
 inline float vdistSq2(const float* p, const float* q)
 {
 	const float dx = q[0] - p[0];
-	const float dz = q[1] - p[1];
-	return dx*dx + dz*dz;
+	const float dy = q[1] - p[1];
+	return dx*dx + dy*dy;
 }
 
 inline float vdist2(const float* p, const float* q)
@@ -929,7 +929,7 @@ static void seedArrayWithPolyCenter(rcContext* ctx, const rcCompactHeightfield& 
 	for (int j = 0; j < npoly; ++j)
 	{
 		pcx += (int)verts[poly[j]*3+0];
-		pcy += (int)verts[poly[j]*3+2];
+		pcy += (int)verts[poly[j]*3+1];
 	}
 	pcx /= npoly;
 	pcy /= npoly;
