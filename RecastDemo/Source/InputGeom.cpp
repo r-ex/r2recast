@@ -437,8 +437,8 @@ bool InputGeom::raycastMesh(float* src, float* dst, float& tmin)
 	q[0] = src[0] + (dst[0]-src[0])*btmax;
 	q[1] = src[1] + (dst[1]-src[1])*btmax;
 	
-	int cid[512];
-	const int ncid = rcGetChunksOverlappingSegment(m_chunkyMesh, p, q, cid, 512);
+	int cid[1024];
+	const int ncid = rcGetChunksOverlappingSegment(m_chunkyMesh, p, q, cid, 1024);
 	if (!ncid)
 		return false;
 	
