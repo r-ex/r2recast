@@ -203,6 +203,8 @@ void Sample::handleCommonSettings()
 			m_agentHeight = h.height;
 			if (is_human)
 				m_count_reachability_tables = 4;
+			m_navmesh_name = h.name;
+			m_targetTileSize = h.tile_size;
 		}
 		is_human = false;
 	}
@@ -437,7 +439,11 @@ void unpatch_tiletf2(dtMeshTile* t)
 }
 dtNavMesh* Sample::loadAll(const char* path)
 {
-	FILE* fp = fopen(path, "rb");
+
+	char buffer[256];
+	sprintf(buffer, "%s_%s.nm", path, m_navmesh_name);
+
+	FILE* fp = fopen(buffer, "rb");
 	if (!fp) return 0;
 
 	// Read header.
@@ -511,8 +517,10 @@ dtNavMesh* Sample::loadAll(const char* path)
 void Sample::saveAll(const char* path,dtNavMesh* mesh)
 {
 	if (!mesh) return;
+	char buffer[256];
+	sprintf(buffer, "%s_%s.nm", path, m_navmesh_name);
 
-	FILE* fp = fopen(path, "wb");
+	FILE* fp = fopen(buffer, "wb");
 	if (!fp)
 		return;
 

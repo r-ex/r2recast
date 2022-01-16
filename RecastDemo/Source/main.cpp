@@ -96,7 +96,7 @@ int main(int /*argc*/, char** /*argv*/)
 	SDL_GetCurrentDisplayMode(0, &displayMode);
 
 	bool presentationMode = false;
-	Uint32 flags = SDL_WINDOW_OPENGL;
+	Uint32 flags = SDL_WINDOW_OPENGL | SDL_RENDERER_PRESENTVSYNC;
 	int width;
 	int height;
 	if (presentationMode)
@@ -727,6 +727,7 @@ int main(int /*argc*/, char** /*argv*/)
 				if (sample && geom)
 				{
 					sample->handleMeshChanged(geom);
+					sample->m_model_name = meshName;
 				}
 
 				if (geom || sample)
@@ -836,6 +837,7 @@ int main(int /*argc*/, char** /*argv*/)
 					if (sample && geom)
 					{
 						sample->handleMeshChanged(geom);
+						sample->m_model_name = meshName;
 					}
 
 					// This will ensure that tile & poly bits are updated in tiled sample.
@@ -931,6 +933,7 @@ int main(int /*argc*/, char** /*argv*/)
 		
 		glEnable(GL_DEPTH_TEST);
 		SDL_GL_SwapWindow(window);
+		
 	}
 	
 	imguiRenderGLDestroy();

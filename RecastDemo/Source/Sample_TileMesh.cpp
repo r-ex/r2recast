@@ -276,13 +276,13 @@ void Sample_TileMesh::handleSettings()
 	
 	if (imguiButton("Save"))
 	{
-		Sample::saveAll("all_tiles_navmesh.nm", m_navMesh);
+		Sample::saveAll(m_model_name.c_str(), m_navMesh);
 	}
 
 	if (imguiButton("Load"))
 	{
 		dtFreeNavMesh(m_navMesh);
-		m_navMesh = Sample::loadAll("all_tiles_navmesh.nm");
+		m_navMesh = Sample::loadAll(m_model_name.c_str());
 		m_navQuery->init(m_navMesh, 2048);
 	}
 
