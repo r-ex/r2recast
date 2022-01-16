@@ -21,6 +21,7 @@
 
 #include "Recast.h"
 #include "SampleInterfaces.h"
+#include <string>
 
 struct hulldef
 {
@@ -130,6 +131,7 @@ protected:
 	float m_detailSampleMaxError;
 	int m_partitionType;
 	int m_count_reachability_tables;
+	const char* m_navmesh_name="unk";
 
 	bool m_filterLowHangingObstacles;
 	bool m_filterLedgeSpans;
@@ -146,6 +148,8 @@ protected:
 	void saveAll(const char* path,dtNavMesh* mesh);
 
 public:
+	std::string m_model_name;
+
 	Sample();
 	virtual ~Sample();
 	
