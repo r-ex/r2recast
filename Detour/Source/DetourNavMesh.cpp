@@ -30,7 +30,7 @@
 
 inline bool overlapSlabs(const float* amin, const float* amax,
 						 const float* bmin, const float* bmax,
-						 const float px, const float py)
+						 const float px, const float pz)
 {
 	// Check for horizontal overlap.
 	// The segment is shrunken a little so that slabs which touch
@@ -57,7 +57,7 @@ inline bool overlapSlabs(const float* amin, const float* amax,
 		return true;
 		
 	// Check for overlap at endpoints.
-	const float thr = dtSqr(py*2);
+	const float thr = dtSqr(pz*2);
 	if (dmin*dmin <= thr || dmax*dmax <= thr)
 		return true;
 		
