@@ -198,6 +198,25 @@ void duDebugDrawGridXY(struct duDebugDraw* dd, const float ox, const float oy, c
 	dd->end();
 }
 
+void duDebugDrawGridXY_TF2(struct duDebugDraw* dd, const float max_x, const float oy, const float oz,
+	const int w, const int h, const float size,
+	const unsigned int col, const float lineWidth)
+{
+	if (!dd) return;
+
+	dd->begin(DU_DRAW_LINES, lineWidth);
+	for (int i = 0; i <= h; ++i)
+	{
+		dd->vertex(max_x, oy + i * size, oz, col);
+		dd->vertex(max_x - w * size, oy + i * size, oz, col);
+	}
+	for (int i = 0; i <= w; ++i)
+	{
+		dd->vertex(max_x - i * size, oy, oz, col);
+		dd->vertex(max_x - i * size, oy + h * size, oz, col);
+	}
+	dd->end();
+}
 void duAppendCylinderWire(struct duDebugDraw* dd, float minx, float miny, float minz,
 						  float maxx, float maxy, float maxz, unsigned int col)
 {
