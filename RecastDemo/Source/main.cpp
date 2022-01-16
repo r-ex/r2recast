@@ -727,7 +727,7 @@ int main(int /*argc*/, char** /*argv*/)
 				if (sample && geom)
 				{
 					sample->handleMeshChanged(geom);
-					sample->m_model_name = meshName;
+					sample->m_model_name = meshName.substr(0,meshName.size()-4);
 				}
 
 				if (geom || sample)
@@ -837,7 +837,7 @@ int main(int /*argc*/, char** /*argv*/)
 					if (sample && geom)
 					{
 						sample->handleMeshChanged(geom);
-						sample->m_model_name = meshName;
+						sample->m_model_name = meshName.substr(0, meshName.size() - 4);
 					}
 
 					// This will ensure that tile & poly bits are updated in tiled sample.
