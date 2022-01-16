@@ -204,7 +204,6 @@ void Sample::handleCommonSettings()
 			if (is_human)
 				m_count_reachability_tables = 4;
 			m_navmesh_name = h.name;
-			m_targetTileSize = h.tile_size;
 		}
 		is_human = false;
 	}
