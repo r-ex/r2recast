@@ -324,7 +324,7 @@ inline float dtVdot2D(const float* u, const float* v)
 /// The vectors are projected onto the xy-plane, so the z-values are ignored.
 inline float dtVperp2D(const float* u, const float* v)
 {
-	return u[1]*v[0] - u[0]*v[1];
+	return u[0]*v[1] - u[1]*v[0];
 }
 
 /// @}

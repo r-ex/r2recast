@@ -2595,13 +2595,13 @@ dtStatus dtNavMeshQuery::raycast(dtPolyRef startRef, const float* startPos, cons
 			{
 				// Calculate link size.
 				const float s = 1.0f/255.0f;
-				float lmin = left[2] + (right[2] - left[2])*(link->bmin*s);
-				float lmax = left[2] + (right[2] - left[2])*(link->bmax*s);
+				float lmin = left[1] + (right[1] - left[1])*(link->bmin*s);
+				float lmax = left[1] + (right[1] - left[1])*(link->bmax*s);
 				if (lmin > lmax) dtSwap(lmin, lmax);
 				
-				// Find Z intersection.
-				float z = startPos[2] + (endPos[2]-startPos[2])*tmax;
-				if (z >= lmin && z <= lmax)
+				// Find y intersection.
+				float y = startPos[1] + (endPos[1]-startPos[1])*tmax;
+				if (y >= lmin && y <= lmax)
 				{
 					nextRef = link->ref;
 					break;
@@ -2637,8 +2637,8 @@ dtStatus dtNavMeshQuery::raycast(dtPolyRef startRef, const float* startPos, cons
 			float eDir[3], diff[3];
 			dtVsub(eDir, e2, e1);
 			dtVsub(diff, curPos, e1);
-			float s = dtSqr(eDir[0]) > dtSqr(eDir[2]) ? diff[0] / eDir[0] : diff[2] / eDir[2];
-			curPos[1] = e1[1] + eDir[1] * s;
+			float s = dtSqr(eDir[0]) > dtSqr(eDir[1]) ? diff[0] / eDir[0] : diff[1] / eDir[1];
+			curPos[2] = e1[2] + eDir[2] * s;
 
 			hit->pathCost += filter->getCost(lastPos, curPos, prevRef, prevTile, prevPoly, curRef, tile, poly, nextRef, nextTile, nextPoly);
 		}
@@ -2653,10 +2653,10 @@ dtStatus dtNavMeshQuery::raycast(dtPolyRef startRef, const float* startPos, cons
 			const float* va = &verts[a*3];
 			const float* vb = &verts[b*3];
 			const float dx = vb[0] - va[0];
-			const float dz = vb[2] - va[2];
-			hit->hitNormal[0] = dz;
-			hit->hitNormal[1] = 0;
-			hit->hitNormal[2] = -dx;
+			const float dy = vb[1] - va[1];
+			hit->hitNormal[0] = dy;
+			hit->hitNormal[1] = -dx;
+			hit->hitNormal[2] = 0;
 			dtVnormalize(hit->hitNormal);
 			
 			hit->pathCount = n;
