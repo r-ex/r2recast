@@ -2307,8 +2307,8 @@ dtStatus dtNavMeshQuery::getPortalPoints(dtPolyRef from, const dtPoly* fromPoly,
 	// Find portal vertices.
 	const int v0 = fromPoly->verts[link->edge];
 	const int v1 = fromPoly->verts[(link->edge+1) % (int)fromPoly->vertCount];
-	dtVcopy(left, &fromTile->verts[v0*3]);
-	dtVcopy(right, &fromTile->verts[v1*3]);
+	dtVcopy(left, &fromTile->verts[v1*3]);
+	dtVcopy(right, &fromTile->verts[v0*3]);
 	
 	// If the link is at tile boundary, dtClamp the vertices to
 	// the link width.
@@ -2320,8 +2320,8 @@ dtStatus dtNavMeshQuery::getPortalPoints(dtPolyRef from, const dtPoly* fromPoly,
 			const float s = 1.0f/255.0f;
 			const float tmin = link->bmin*s;
 			const float tmax = link->bmax*s;
-			dtVlerp(left, &fromTile->verts[v0*3], &fromTile->verts[v1*3], tmin);
-			dtVlerp(right, &fromTile->verts[v0*3], &fromTile->verts[v1*3], tmax);
+			dtVlerp(left, &fromTile->verts[v1*3], &fromTile->verts[v0*3], tmin);
+			dtVlerp(right, &fromTile->verts[v1*3], &fromTile->verts[v0*3], tmax);
 		}
 	}
 	
