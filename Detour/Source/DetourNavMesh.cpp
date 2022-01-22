@@ -474,7 +474,7 @@ void dtNavMesh::connectExtOffMeshLinks(dtMeshTile* tile, dtMeshTile* target, int
 		if (targetPoly->firstLink == DT_NULL_LINK)
 			continue;
 		
-		const float halfExtents[3] = { targetCon->rad, target->header->walkableClimb, targetCon->rad };
+		const float halfExtents[3] = { targetCon->rad, targetCon->rad, target->header->walkableClimb };
 		
 		// Find polygon to connect to.
 		const float* p = &targetCon->pos[3];
