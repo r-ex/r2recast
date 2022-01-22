@@ -137,7 +137,7 @@ inline int computeVertexHash(int x, int y, int z)
 static unsigned short addVertex(unsigned short x, unsigned short y, unsigned short z,
 								unsigned short* verts, int* firstVert, int* nextVert, int& nv)
 {
-	int bucket = computeVertexHash(x, 0, z);
+	int bucket = computeVertexHash(x, y, 0);
 	int i = firstVert[bucket];
 	
 	while (i != -1)
@@ -523,7 +523,7 @@ static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 	vb = pa[(ea+1)%na];
 	
 	int dx = (int)verts[va*3+0] - (int)verts[vb*3+0];
-	int dy = (int)verts[va*3+2] - (int)verts[vb*3+2];
+	int dy = (int)verts[va*3+1] - (int)verts[vb*3+1];
 	
 	return dx*dx + dy*dy;
 }

@@ -844,13 +844,13 @@ inline int computeVertexHash2(int x, int y, int z)
 static unsigned short addVertex(unsigned short x, unsigned short y, unsigned short z,
 								unsigned short* verts, unsigned short* firstVert, unsigned short* nextVert, int& nv)
 {
-	int bucket = computeVertexHash2(x, 0, z);
+	int bucket = computeVertexHash2(x, y, 0);
 	unsigned short i = firstVert[bucket];
 	
 	while (i != DT_TILECACHE_NULL_IDX)
 	{
 		const unsigned short* v = &verts[i*3];
-		if (v[0] == x && v[2] == z && (dtAbs(v[1] - y) <= 2))
+		if (v[0] == x && v[1] == y && (dtAbs(v[1] - z) <= 2))
 			return i;
 		i = nextVert[i]; // next
 	}

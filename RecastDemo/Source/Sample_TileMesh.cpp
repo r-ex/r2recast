@@ -1071,7 +1071,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		return 0;
 	}
 	
-	//rcFlipPolyMeshDetail(*m_dmesh); //NB(warmist): wtf, if we flip detail, it displays ok, but builds navmesh wrong...
+	//rcFlipPolyMeshDetail(*m_dmesh);
 	if (!m_keepInterResults)
 	{
 		rcFreeCompactHeightfield(m_chf);
@@ -1122,7 +1122,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.polyFlags = m_pmesh->flags;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
-		params.detailMeshes = m_dmesh->meshes;
+		params.detailMeshes = nullptr;// m_dmesh->meshes;
 		params.detailVerts = m_dmesh->verts;
 		params.detailVertsCount = m_dmesh->nverts;
 		params.detailTris = m_dmesh->tris;
