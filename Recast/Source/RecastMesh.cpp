@@ -1631,13 +1631,15 @@ bool rcFlipPolyMesh(rcPolyMesh& mesh)
 				break;
 		}
 		//flip order of vertexes
-		/*for (int j = 0; j < cur_count / 2; j++)
+		///*
+		for (int j = 0; j < cur_count / 2; j++)
 		{
 			std::swap(poly_begin[j], poly_begin[cur_count - j - 1]);
 			std::swap(poly_begin_neis[j], poly_begin_neis[cur_count - j - 1]);
 			
-		}*/
-		//shift_left(poly_begin_neis, cur_count); //this is needed because the neis index edges not vertexes
+		}
+		//*/
+		shift_left(poly_begin_neis, cur_count); //this is needed because the neis index edges not vertexes
 		flip_neis_direction(mesh,poly_begin_neis, cur_count);
 	}
 	return true;
