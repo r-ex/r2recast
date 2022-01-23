@@ -70,7 +70,7 @@ static const int DT_VERTS_PER_POLYGON = 6;
 static const int DT_NAVMESH_MAGIC = 'D'<<24 | 'N'<<16 | 'A'<<8 | 'V';
 
 /// A version number used to detect compatibility of navigation tile data.
-static const int DT_NAVMESH_VERSION = 13;
+static const int DT_NAVMESH_VERSION = 16;
 
 /// A magic number used to detect the compatibility of navigation tile states.
 static const int DT_NAVMESH_STATE_MAGIC = 'D'<<24 | 'N'<<16 | 'M'<<8 | 'S';
@@ -261,6 +261,9 @@ struct dtMeshHeader
 	int x;					///< The x-position of the tile within the dtNavMesh tile grid. (x, y, layer)
 	int y;					///< The y-position of the tile within the dtNavMesh tile grid. (x, y, layer)
 	int layer;				///< The layer of the tile within the dtNavMesh tile grid. (x, y, layer)
+
+	int unk0;				// This gets set to -1 in 'Detour_LevelInit()' [r5apex.exe + 0xEF86C9).
+
 	unsigned int userId;	///< The user defined id of the tile.
 	int polyCount;			///< The number of polygons in the tile.
 	int sth_per_poly;
@@ -348,7 +351,7 @@ struct dtNavMeshParams
 	int disjoint_poly_group_count = 0;
 	int reachability_table_size = 0;
 	int reachability_table_count = 0;
-
+	int unk0 = 0; // the header of Apex is 4 bytes longer then Titanfall 2. The DNAV block won't get copied into the buffer without this resulting in a crash.
 };
 
 /// A navigation mesh based on tiles of convex polygons.
