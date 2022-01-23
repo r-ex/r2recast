@@ -889,6 +889,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	tbmin[1] = m_cfg.bmin[1];
 	tbmax[0] = m_cfg.bmax[0];
 	tbmax[1] = m_cfg.bmax[1];
+#if 0 //NOTE(warmist): original algo
 	int cid[2048];// TODO: Make grow when returning too many items.
 	const int ncid = rcGetChunksOverlappingRect(chunkyMesh, tbmin, tbmax, cid, 2048);
 	if (!ncid)
@@ -911,7 +912,35 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		if (!rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareas, nctris, *m_solid, m_cfg.walkableClimb))
 			return 0;
 	}
-	
+#else //NOTE(warmist): algo with limited return but can be reinvoked to continue the query
+	int cid[1024];//NOTE: we don't grow it but we reuse it (e.g. like a yieldable function or iterator or sth)
+	int current_node = 0;
+
+	bool done = false;
+	m_tileTriCount = 0;
+	do{
+		int current_count = 0;
+		done=rcGetChunksOverlappingRect(chunkyMesh, tbmin, tbmax, cid, 1024,current_count,current_node);
+		for (int i = 0; i < current_count; ++i)
+		{
+			const rcChunkyTriMeshNode& node = chunkyMesh->nodes[cid[i]];
+			const int* ctris = &chunkyMesh->tris[node.i * 3];
+			const int nctris = node.n;
+
+			m_tileTriCount += nctris;
+
+			memset(m_triareas, 0, nctris * sizeof(unsigned char));
+			rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle,
+				verts, nverts, ctris, nctris, m_triareas);
+
+			if (!rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareas, nctris, *m_solid, m_cfg.walkableClimb))
+				return 0;
+		}
+	} while (!done);
+
+	if (m_tileTriCount == 0)
+		return 0;
+#endif
 	if (!m_keepInterResults)
 	{
 		delete [] m_triareas;
