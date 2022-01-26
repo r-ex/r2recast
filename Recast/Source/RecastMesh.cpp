@@ -189,6 +189,16 @@ inline bool leftOn(const int* a, const int* b, const int* c)
 {
 	return area2(a, b, c) <= 0;
 }
+#define REVERSE_DIRECTION 0
+inline bool right(const int* a, const int* b, const int* c)
+{
+	return area2(a, b, c) > 0;
+}
+
+inline bool rightOn(const int* a, const int* b, const int* c)
+{
+	return area2(a, b, c) >= 0;
+}
 
 inline bool collinear(const int* a, const int* b, const int* c)
 {
@@ -204,8 +214,11 @@ static bool intersectProp(const int* a, const int* b, const int* c, const int* d
 	if (collinear(a,b,c) || collinear(a,b,d) ||
 		collinear(c,d,a) || collinear(c,d,b))
 		return false;
-	
-	return xorb(left(a,b,c), left(a,b,d)) && xorb(left(c,d,a), left(c,d,b));
+#if REVERSE_DIRECTION
+	return xorb(right(a,b,c), right(a,b,d)) && xorb(right(c,d,a), right(c,d,b));
+#else
+	return xorb(left(a, b, c), left(a, b, d)) && xorb(left(c, d, a), left(c, d, b));
+#endif
 }
 
 // Returns T iff (a,b,c) are collinear and point c lies 
@@ -237,7 +250,13 @@ static bool vequal(const int* a, const int* b)
 {
 	return a[0] == b[0] && a[1] == b[1];
 }
-
+#if REVERSE_DIRECTION
+#define STEP_DIR prev
+#define REV_STEP_DIR next
+#else
+#define STEP_DIR next
+#define REV_STEP_DIR prev
+#endif
 // Returns T iff (v_i, v_j) is a proper internal *or* external
 // diagonal of P, *ignoring edges incident to v_i and v_j*.
 static bool diagonalie(int i, int j, int n, const int* verts, int* indices)
@@ -248,7 +267,7 @@ static bool diagonalie(int i, int j, int n, const int* verts, int* indices)
 	// For each edge (k,k+1) of P
 	for (int k = 0; k < n; k++)
 	{
-		int k1 = next(k, n);
+		int k1 = STEP_DIR(k, n);
 		// Skip edges incident to i or j
 		if (!((k == i) || (k1 == i) || (k == j) || (k1 == j)))
 		{
@@ -271,15 +290,23 @@ static bool	inCone(int i, int j, int n, const int* verts, int* indices)
 {
 	const int* pi = &verts[(indices[i] & 0x0fffffff) * 4];
 	const int* pj = &verts[(indices[j] & 0x0fffffff) * 4];
-	const int* pi1 = &verts[(indices[next(i, n)] & 0x0fffffff) * 4];
-	const int* pin1 = &verts[(indices[prev(i, n)] & 0x0fffffff) * 4];
-
+	const int* pi1 = &verts[(indices[STEP_DIR(i, n)] & 0x0fffffff) * 4];
+	const int* pin1 = &verts[(indices[REV_STEP_DIR(i, n)] & 0x0fffffff) * 4];
+#if REVERSE_DIRECTION
+	// If P[i] is a convex vertex [ i+1 right or on (i-1,i) ].
+	if (rightOn(pin1, pi, pi1))
+		return right(pi, pj, pin1) && right(pj, pi, pi1);
+	// Assume (i-1,i,i+1) not collinear.
+	// else P[i] is reflex.
+	return !(rightOn(pi, pj, pi1) && rightOn(pj, pi, pin1));
+#else
 	// If P[i] is a convex vertex [ i+1 left or on (i-1,i) ].
 	if (leftOn(pin1, pi, pi1))
 		return left(pi, pj, pin1) && left(pj, pi, pi1);
 	// Assume (i-1,i,i+1) not collinear.
 	// else P[i] is reflex.
 	return !(leftOn(pi, pj, pi1) && leftOn(pj, pi, pin1));
+#endif
 }
 
 // Returns T iff (v_i, v_j) is a proper internal
@@ -298,7 +325,7 @@ static bool diagonalieLoose(int i, int j, int n, const int* verts, int* indices)
 	// For each edge (k,k+1) of P
 	for (int k = 0; k < n; k++)
 	{
-		int k1 = next(k, n);
+		int k1 = STEP_DIR(k, n);
 		// Skip edges incident to i or j
 		if (!((k == i) || (k1 == i) || (k == j) || (k1 == j)))
 		{
@@ -319,15 +346,23 @@ static bool	inConeLoose(int i, int j, int n, const int* verts, int* indices)
 {
 	const int* pi = &verts[(indices[i] & 0x0fffffff) * 4];
 	const int* pj = &verts[(indices[j] & 0x0fffffff) * 4];
-	const int* pi1 = &verts[(indices[next(i, n)] & 0x0fffffff) * 4];
-	const int* pin1 = &verts[(indices[prev(i, n)] & 0x0fffffff) * 4];
-	
+	const int* pi1 = &verts[(indices[STEP_DIR(i, n)] & 0x0fffffff) * 4];
+	const int* pin1 = &verts[(indices[REV_STEP_DIR(i, n)] & 0x0fffffff) * 4];
+#if REVERSE_DIRECTION
+	// If P[i] is a convex vertex [ i+1 right or on (i-1,i) ].
+	if (rightOn(pin1, pi, pi1))
+		return rightOn(pi, pj, pin1) && rightOn(pj, pi, pi1);
+	// Assume (i-1,i,i+1) not collinear.
+	// else P[i] is reflex.
+	return !(rightOn(pi, pj, pi1) && rightOn(pj, pi, pin1));
+#else
 	// If P[i] is a convex vertex [ i+1 left or on (i-1,i) ].
 	if (leftOn(pin1, pi, pi1))
 		return leftOn(pi, pj, pin1) && leftOn(pj, pi, pi1);
 	// Assume (i-1,i,i+1) not collinear.
 	// else P[i] is reflex.
 	return !(leftOn(pi, pj, pi1) && leftOn(pj, pi, pin1));
+#endif
 }
 
 static bool diagonalLoose(int i, int j, int n, const int* verts, int* indices)
@@ -344,8 +379,8 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 	// The last bit of the index is used to indicate if the vertex can be removed.
 	for (int i = 0; i < n; i++)
 	{
-		int i1 = next(i, n);
-		int i2 = next(i1, n);
+		int i1 = STEP_DIR(i, n);
+		int i2 = STEP_DIR(i1, n);
 		if (diagonal(i, i2, n, verts, indices))
 			indices[i1] |= 0x80000000;
 	}
@@ -356,11 +391,11 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 		int mini = -1;
 		for (int i = 0; i < n; i++)
 		{
-			int i1 = next(i, n);
+			int i1 = STEP_DIR(i, n);
 			if (indices[i1] & 0x80000000)
 			{
 				const int* p0 = &verts[(indices[i] & 0x0fffffff) * 4];
-				const int* p2 = &verts[(indices[next(i1, n)] & 0x0fffffff) * 4];
+				const int* p2 = &verts[(indices[STEP_DIR(i1, n)] & 0x0fffffff) * 4];
 				
 				int dx = p2[0] - p0[0];
 				int dy = p2[1] - p0[1];
@@ -388,12 +423,12 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 			mini = -1;
 			for (int i = 0; i < n; i++)
 			{
-				int i1 = next(i, n);
-				int i2 = next(i1, n);
+				int i1 = STEP_DIR(i, n);
+				int i2 = STEP_DIR(i1, n);
 				if (diagonalLoose(i, i2, n, verts, indices))
 				{
 					const int* p0 = &verts[(indices[i] & 0x0fffffff) * 4];
-					const int* p2 = &verts[(indices[next(i2, n)] & 0x0fffffff) * 4];
+					const int* p2 = &verts[(indices[STEP_DIR(i2, n)] & 0x0fffffff) * 4];
 					int dx = p2[0] - p0[0];
 					int dy = p2[1] - p0[1];
 					int len = dx*dx + dy*dy;
@@ -414,8 +449,8 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 		}
 		
 		int i = mini;
-		int i1 = next(i, n);
-		int i2 = next(i1, n);
+		int i1 = STEP_DIR(i, n);
+		int i2 = STEP_DIR(i1, n);
 		
 		*dst++ = indices[i] & 0x0fffffff;
 		*dst++ = indices[i1] & 0x0fffffff;
@@ -428,23 +463,29 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 			indices[k] = indices[k+1];
 		
 		if (i1 >= n) i1 = 0;
-		i = prev(i1,n);
+		i = REV_STEP_DIR(i1,n);
 		// Update diagonal flags.
-		if (diagonal(prev(i, n), i1, n, verts, indices))
+		if (diagonal(REV_STEP_DIR(i, n), i1, n, verts, indices))
 			indices[i] |= 0x80000000;
 		else
 			indices[i] &= 0x0fffffff;
 		
-		if (diagonal(i, next(i1, n), n, verts, indices))
+		if (diagonal(i, STEP_DIR(i1, n), n, verts, indices))
 			indices[i1] |= 0x80000000;
 		else
 			indices[i1] &= 0x0fffffff;
 	}
 	
 	// Append the remaining triangle.
+#if REVERSE_DIRECTION
+	*dst++ = indices[2] & 0x0fffffff;
+	*dst++ = indices[1] & 0x0fffffff;
+	*dst++ = indices[0] & 0x0fffffff;
+#else
 	*dst++ = indices[0] & 0x0fffffff;
 	*dst++ = indices[1] & 0x0fffffff;
 	*dst++ = indices[2] & 0x0fffffff;
+#endif
 	ntris++;
 	
 	return ntris;
@@ -463,7 +504,11 @@ inline bool uleft(const unsigned short* a, const unsigned short* b, const unsign
 	return ((int)b[0] - (int)a[0]) * ((int)c[1] - (int)a[1]) -
 		   ((int)c[0] - (int)a[0]) * ((int)b[1] - (int)a[1]) < 0;
 }
-
+inline bool uright(const unsigned short* a, const unsigned short* b, const unsigned short* c)
+{
+	return ((int)b[0] - (int)a[0]) * ((int)c[1] - (int)a[1]) -
+		((int)c[0] - (int)a[0]) * ((int)b[1] - (int)a[1]) > 0;
+}
 static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 							 const unsigned short* verts, int& ea, int& eb,
 							 const int nvp)
@@ -510,15 +555,23 @@ static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 	va = pa[(ea+na-1) % na];
 	vb = pa[ea];
 	vc = pb[(eb+2) % nb];
-	if (!uleft(&verts[va*3], &verts[vb*3], &verts[vc*3]))
+#if REVERSE_DIRECTION
+	if (!uright(&verts[va*3], &verts[vb*3], &verts[vc*3]))
 		return -1;
-	
+#else
+	if (!uleft(&verts[va * 3], &verts[vb * 3], &verts[vc * 3]))
+		return -1;
+#endif
 	va = pb[(eb+nb-1) % nb];
 	vb = pb[eb];
 	vc = pa[(ea+2) % na];
-	if (!uleft(&verts[va*3], &verts[vb*3], &verts[vc*3]))
+#if REVERSE_DIRECTION
+	if (!uright(&verts[va*3], &verts[vb*3], &verts[vc*3]))
 		return -1;
-	
+#else
+	if (!uleft(&verts[va * 3], &verts[vb * 3], &verts[vc * 3]))
+		return -1;
+#endif
 	va = pa[ea];
 	vb = pa[(ea+1)%na];
 	
