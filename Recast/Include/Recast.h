@@ -1199,7 +1199,7 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 
 
 bool rcFlipPolyMesh(rcPolyMesh& mesh);
-bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail);
+bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail,int poly_tris);
 /// @}
 
 #endif // RECAST_H

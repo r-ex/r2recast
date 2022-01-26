@@ -556,7 +556,14 @@ static float polyMinExtent(const float* verts, const int nverts)
 // Last time I checked the if version got compiled using cmov, which was a lot faster than module (with idiv).
 inline int prev(int i, int n) { return i-1 >= 0 ? i-1 : n-1; }
 inline int next(int i, int n) { return i+1 < n ? i+1 : 0; }
-
+#define REVERSE_DIRECTION 1
+#if REVERSE_DIRECTION
+#define STEP_DIR prev
+#define REV_STEP_DIR next
+#else
+#define STEP_DIR next
+#define REV_STEP_DIR prev
+#endif
 static void triangulateHull(const int /*nverts*/, const float* verts, const int nhull, const int* hull, const int nin, rcIntArray& tris)
 {
 	int start = 0, left = 1, right = nhull-1;
@@ -567,8 +574,8 @@ static void triangulateHull(const int /*nverts*/, const float* verts, const int 
 	for (int i = 0; i < nhull; i++)
 	{
 		if (hull[i] >= nin) continue; // Ears are triangles with original vertices as middle vertex while others are actually line segments on edges
-		int pi = prev(i, nhull);
-		int ni = next(i, nhull);
+		int pi = REV_STEP_DIR(i, nhull);
+		int ni = STEP_DIR(i, nhull);
 		const float* pv = &verts[hull[pi]*3];
 		const float* cv = &verts[hull[i]*3];
 		const float* nv = &verts[hull[ni]*3];
@@ -592,11 +599,11 @@ static void triangulateHull(const int /*nverts*/, const float* verts, const int 
 	// depending on which triangle has shorter perimeter.
 	// This heuristic was chose emprically, since it seems
 	// handle tesselated straight edges well.
-	while (next(left, nhull) != right)
+	while (STEP_DIR(left, nhull) != right)
 	{
 		// Check to see if se should advance left or right.
-		int nleft = next(left, nhull);
-		int nright = prev(right, nhull);
+		int nleft = STEP_DIR(left, nhull);
+		int nright = REV_STEP_DIR(right, nhull);
 		
 		const float* cvleft = &verts[hull[left]*3];
 		const float* nvleft = &verts[hull[nleft]*3];
@@ -769,7 +776,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 	}
 	
 	// If the polygon minimum extent is small (sliver or small triangle), do not try to add internal points.
-	if (minExtent < sampleDist*2)
+	//if (minExtent < sampleDist*2)
 	{
 		triangulateHull(nverts, verts, nhull, hull, nin, tris);
 		return true;
@@ -1375,18 +1382,18 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		for (int j = 0; j < ntris; ++j)
 		{
 			const int* t = &tris[j*4];
-			//flipped
+#if 1
 			dmesh.tris[dmesh.ntris*4+0] = (unsigned char)t[0];
 			dmesh.tris[dmesh.ntris*4+1] = (unsigned char)t[2];
 			dmesh.tris[dmesh.ntris*4+2] = (unsigned char)t[1];
 			dmesh.tris[dmesh.ntris*4+3] = getTriFlags(&verts[t[0]*3], &verts[t[2]*3], &verts[t[1]*3], poly, npoly);
 			
-			/* original 
+#else
 			dmesh.tris[dmesh.ntris * 4 + 0] = (unsigned char)t[0];
 			dmesh.tris[dmesh.ntris * 4 + 1] = (unsigned char)t[1];
 			dmesh.tris[dmesh.ntris * 4 + 2] = (unsigned char)t[2];
 			dmesh.tris[dmesh.ntris * 4 + 3] = getTriFlags(&verts[t[0] * 3], &verts[t[1] * 3], &verts[t[2] * 3], poly, npoly);
-			*/
+#endif
 			dmesh.ntris++;
 		}
 	}
@@ -1478,11 +1485,17 @@ static unsigned char flip_flags(unsigned char flags_in)
 	flags |= ((flags_in >>4) & 0b11) << 4;
 	return flags;
 }
-bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail)
+bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail,int poly_tris)
 {
 	for (int i = 0; i < mdetail.ntris; i++)
 	{
 		auto tri_begin = mdetail.tris + i * 4;
+		bool skip = false;
+		for (int j = 0; j < 3; j++)
+			if (tri_begin[j] < poly_tris)
+				skip = true;
+		if (skip)
+			continue;
 		std::swap(tri_begin[0], tri_begin[2]);
 		tri_begin[3]=flip_flags(tri_begin[3]);
 	}
