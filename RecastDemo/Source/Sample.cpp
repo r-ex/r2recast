@@ -224,9 +224,9 @@ void Sample::handleCommonSettings()
 	
 	imguiSeparator();
 	imguiLabel("Agent");
-	imguiSlider("Height", &m_agentHeight, 0.1f, 100.0f, 0.1f);
+	imguiSlider("Height", &m_agentHeight, 0.1f, 300.0f, 0.1f);
 	imguiSlider("Radius", &m_agentRadius, 0.0f, 100.0f, 0.1f);
-	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 50.0f, 0.1f);
+	imguiSlider("Max Climb", &m_agentMaxClimb, 0.1f, 120.0f, 0.1f);
 	imguiSlider("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, 1.0f);
 	
 	imguiSeparator();

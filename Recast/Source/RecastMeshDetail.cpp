@@ -322,7 +322,37 @@ static int addEdge(rcContext* ctx, int* edges, int& nedges, const int maxEdges, 
 		return EV_UNDEF;
 	}
 }
+static int addEdgeFlipped(rcContext* ctx, int* edges, int& nedges, const int maxEdges, int s, int t, int l, int r)
+{
+	if (nedges >= maxEdges)
+	{
+		ctx->log(RC_LOG_ERROR, "addEdge: Too many edges (%d/%d).", nedges, maxEdges);
+		return EV_UNDEF;
+	}
 
+	// Add edge if not already in the triangulation.
+	int e = findEdge(edges, nedges, s, t);
+	if (e == EV_UNDEF)
+	{
+		int* edge = &edges[nedges * 4];
+		edge[0] = t;
+		edge[1] = s;
+		edge[2] = l;
+		edge[3] = r;
+		return nedges++;
+	}
+	else
+	{
+		return EV_UNDEF;
+	}
+}
+static void updateRightFace(int* e, int s, int t, int f)
+{
+	if (e[1] == s && e[0] == t && e[2] == EV_UNDEF)
+		e[2] = f;
+	else if (e[0] == s && e[1] == t && e[3] == EV_UNDEF)
+		e[3] = f;
+}
 static void updateLeftFace(int* e, int s, int t, int f)
 {
 	if (e[0] == s && e[1] == t && e[2] == EV_UNDEF)
@@ -359,7 +389,7 @@ static bool overlapEdges(const float* pts, const int* edges, int nedges, int s1,
 	}
 	return false;
 }
-
+#define REVERSE_DIRECTION 1
 static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges, int& nedges, const int maxEdges, int& nfaces, int e)
 {
 	static const float EPS = 1e-5f;
@@ -368,6 +398,18 @@ static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges
 	
 	// Cache s and t.
 	int s,t;
+#if REVERSE_DIRECTION
+	if (edge[3] == EV_UNDEF)
+	{
+		s = edge[0];
+		t = edge[1];
+	}
+	else if (edge[2] == EV_UNDEF)
+	{
+		s = edge[1];
+		t = edge[0];
+	}
+#else
 	if (edge[2] == EV_UNDEF)
 	{
 		s = edge[0];
@@ -378,20 +420,25 @@ static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges
 		s = edge[1];
 		t = edge[0];
 	}
+#endif
 	else
 	{
 	    // Edge already completed.
 	    return;
 	}
     
-	// Find best point on left of edge.
+	// Find best point on right of edge.
 	int pt = npts;
 	float c[3] = {0,0,0};
 	float r = -1;
 	for (int u = 0; u < npts; ++u)
 	{
 		if (u == s || u == t) continue;
+#if 0
+		if (vcross2(&pts[t*3], &pts[s*3], &pts[u*3]) > EPS)
+#else
 		if (vcross2(&pts[s*3], &pts[t*3], &pts[u*3]) > EPS)
+#endif
 		{
 			if (r < 0)
 			{
@@ -428,41 +475,51 @@ static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges
 		}
 	}
 	
+#if REVERSE_DIRECTION
+#define updateFace updateRightFace
+#define addEdgeN addEdgeFlipped
+#else
+#define updateFace updateLeftFace
+#define addEdgeN addEdge
+#endif
 	// Add new triangle or update edge info if s-t is on hull.
 	if (pt < npts)
 	{
 		// Update face information of edge being completed.
-		updateLeftFace(&edges[e*4], s, t, nfaces);
+		updateFace(&edges[e*4], s, t, nfaces);
 		
 		// Add new edge or update face info of old edge.
 		e = findEdge(edges, nedges, pt, s);
 		if (e == EV_UNDEF)
-		    addEdge(ctx, edges, nedges, maxEdges, pt, s, nfaces, EV_UNDEF);
+			addEdgeN(ctx, edges, nedges, maxEdges, pt, s, nfaces, EV_UNDEF);
 		else
-		    updateLeftFace(&edges[e*4], pt, s, nfaces);
+			updateFace(&edges[e*4], pt, s, nfaces);
 		
 		// Add new edge or update face info of old edge.
 		e = findEdge(edges, nedges, t, pt);
 		if (e == EV_UNDEF)
-		    addEdge(ctx, edges, nedges, maxEdges, t, pt, nfaces, EV_UNDEF);
+			addEdgeN(ctx, edges, nedges, maxEdges, t, pt, nfaces, EV_UNDEF);
 		else
-		    updateLeftFace(&edges[e*4], t, pt, nfaces);
+			updateFace(&edges[e*4], t, pt, nfaces);
 		
 		nfaces++;
 	}
 	else
 	{
-		updateLeftFace(&edges[e*4], s, t, EV_HULL);
+		updateFace(&edges[e*4], s, t, EV_HULL);
 	}
 }
-
-static void delaunayHull(rcContext* ctx, const int npts, const float* pts,
+#undef updateFace
+#undef addEdgeN
+void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 						 const int nhull, const int* hull,
 						 rcIntArray& tris, rcIntArray& edges)
 {
 	int nfaces = 0;
 	int nedges = 0;
 	const int maxEdges = npts*10;
+	//edges are: pt1, pt2, right_face,left_face
+	//also they are directional
 	edges.resize(maxEdges*4);
 	
 	for (int i = 0, j = nhull-1; i < nhull; j=i++)
@@ -471,9 +528,9 @@ static void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 	int currentEdge = 0;
 	while (currentEdge < nedges)
 	{
-		if (edges[currentEdge*4+2] == EV_UNDEF)
+		if (edges[currentEdge*4+2] == EV_UNDEF) //does not have a right face
 			completeFacet(ctx, pts, npts, &edges[0], nedges, maxEdges, nfaces, currentEdge);
-		if (edges[currentEdge*4+3] == EV_UNDEF)
+		if (edges[currentEdge*4+3] == EV_UNDEF) //does not have a left face
 			completeFacet(ctx, pts, npts, &edges[0], nedges, maxEdges, nfaces, currentEdge);
 		currentEdge++;
 	}
@@ -486,10 +543,40 @@ static void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 	for (int i = 0; i < nedges; ++i)
 	{
 		const int* e = &edges[i*4];
+#if REVERSE_DIRECTION
+		if (e[2] >= 0)
+		{
+			// Left face
+			int* t = &tris[e[2]*4];
+			if (t[0] == -1)
+			{
+				t[0] = e[0];
+				t[1] = e[1];
+			}
+			else if (t[0] == e[1])
+				t[2] = e[0];
+			else if (t[1] == e[0])
+				t[2] = e[1];
+		}
+		if (e[3] >= 0)
+		{
+			// Right
+			int* t = &tris[e[3]*4];
+			if (t[0] == -1)
+			{
+				t[0] = e[1];
+				t[1] = e[0];
+			}
+			else if (t[0] == e[0])
+				t[2] = e[1];
+			else if (t[1] == e[1])
+				t[2] = e[0];
+		}
+#else
 		if (e[3] >= 0)
 		{
 			// Left face
-			int* t = &tris[e[3]*4];
+			int* t = &tris[e[3] * 4];
 			if (t[0] == -1)
 			{
 				t[0] = e[0];
@@ -503,7 +590,7 @@ static void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 		if (e[2] >= 0)
 		{
 			// Right
-			int* t = &tris[e[2]*4];
+			int* t = &tris[e[2] * 4];
 			if (t[0] == -1)
 			{
 				t[0] = e[1];
@@ -514,6 +601,7 @@ static void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 			else if (t[1] == e[1])
 				t[2] = e[0];
 		}
+#endif
 	}
 	
 	for (int i = 0; i < tris.size()/4; ++i)
@@ -556,7 +644,7 @@ static float polyMinExtent(const float* verts, const int nverts)
 // Last time I checked the if version got compiled using cmov, which was a lot faster than module (with idiv).
 inline int prev(int i, int n) { return i-1 >= 0 ? i-1 : n-1; }
 inline int next(int i, int n) { return i+1 < n ? i+1 : 0; }
-#define REVERSE_DIRECTION 1
+
 #if REVERSE_DIRECTION
 #define STEP_DIR prev
 #define REV_STEP_DIR next
@@ -776,7 +864,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 	}
 	
 	// If the polygon minimum extent is small (sliver or small triangle), do not try to add internal points.
-	//if (minExtent < sampleDist*2)
+	if (minExtent < sampleDist*2)
 	{
 		triangulateHull(nverts, verts, nhull, hull, nin, tris);
 		return true;

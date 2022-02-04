@@ -44,6 +44,8 @@
 #include "Sample_TempObstacles.h"
 #include "Sample_Debug.h"
 
+#include "RecastAlloc.h"
+
 #ifdef WIN32
 #	define snprintf _snprintf
 #	define putenv _putenv
@@ -69,7 +71,120 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
+void save_ply(std::vector<float>& pts,std::vector<int>& colors,rcIntArray& tris)
+{
+	static int counter = 0;
+	char fname[255];
+	sprintf(fname, "out_%d.ply", counter);
+	counter++;
+	auto f = fopen(fname, "wb");
+	fprintf(f,
+R"(ply
+format ascii 1.0
+element vertex %d
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+element face %d
+property list uchar int vertex_index
+end_header
+)",pts.size()/3,tris.size()/4);
+
+	for (size_t i = 0; i < pts.size(); i+=3)
+	{
+		auto c = colors[i / 3];
+		fprintf(f, "%g %g %g %d %d %d\n", pts[i], pts[i + 1], pts[i + 2], c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+	}
+	for (size_t i = 0; i < tris.size(); i += 4)
+	{
+		fprintf(f, "3 %d %d %d\n", tris[i], tris[i + 1], tris[i + 2]);
+	}
+	
+	fclose(f);
+}
+float area2(const float* a, const float* b, const float* c)
+{
+	return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
+}
+void convex_hull(std::vector<float>& pts, std::vector<int>& hull)
+{
+	int pt_count = pts.size() / 3;
+	int cur_pt = 0;
+	float min_x = pts[0];
+	for(size_t i=0;i<pt_count;i++)
+		if (pts[i * 3] < min_x)
+		{
+			min_x = pts[i * 3];
+			cur_pt = i;
+		}
+
+	
+	int point_on_hull = cur_pt;
+	int endpoint = 0;
+	do
+	{
+		hull.push_back(point_on_hull);
+		endpoint = (point_on_hull + 1) % pt_count;
+		for (int i = 0; i < pt_count; i++)
+		{
+			if (area2(&pts[point_on_hull*3], &pts[i*3], &pts[endpoint*3]) < 0) //reverse this comparison for flipped hull direction
+				endpoint = i;
+		}
+		point_on_hull = endpoint;
+	} while (endpoint != hull[0]);
+}
+float frand()
+{
+	return rand() / (float)RAND_MAX;
+}
+void generate_points(float* pts, int count, float dx, float dy, float dz)
+{
+	for (int i = 0; i < count; i++)
+	{
+		pts[i * 3+0] = frand()*dx * 2 - dx;
+		pts[i * 3+1] = frand()*dy * 2 - dy;
+		pts[i * 3+2] = frand()*dz * 2 - dz;
+	}
+}
+#if 1
 int main(int /*argc*/, char** /*argv*/)
+#else
+//just quick tests for stuff
+
+
+
+extern void delaunayHull(rcContext* ctx, const int npts, const float* pts,
+	const int nhull, const int* hull,
+	rcIntArray& tris, rcIntArray& edges);
+
+int main(int /*argc*/, char** /*argv*/)
+{
+	rcContext ctx;
+	std::vector<float> pts(25*3);
+	std::vector<int> colors(pts.size() / 3, 0xffffffff);
+	generate_points(pts.data(), pts.size()/3, 10, 10, 2);
+	
+
+	std::vector<int> hull;
+	convex_hull(pts,hull);
+
+	for (auto h : hull)
+		colors[h] = 0xffff0000;
+
+	rcIntArray tris;
+	save_ply(pts, colors, tris);
+
+	rcIntArray edges;
+	delaunayHull(&ctx, pts.size()/3, pts.data(), hull.size(), hull.data(), tris, edges);
+	save_ply(pts, colors, tris);
+	return 0;
+}
+
+int not_main()
+#endif
 {
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)

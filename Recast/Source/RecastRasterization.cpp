@@ -279,8 +279,8 @@ static bool rasterizeTri(const float* v0, const float* v1, const float* v2,
 	for (int y = y0; y <= y1; ++y)
 	{
 		// Clip polygon to row. Store the remaining polygon as well
-		const float cz = bmin[1] + y*cs;
-		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cz+cs, 1);
+		const float cy = bmin[1] + y*cs;
+		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cy+cs, 1);
 		rcSwap(in, p1);
 		if (nvrow < 3) continue;
 		
