@@ -21,13 +21,13 @@
 #include <vector>
 #include <MeshLoaderObj.h>
 
-class rcMeshLoaderPly:public IMeshLoader
+class rcMeshLoaderBsp:public IMeshLoader
 {
 public:
-	rcMeshLoaderPly() = default;
+	rcMeshLoaderBsp() = default;
 	// Explicitly disabled copy constructor and copy assignment operator.
-	rcMeshLoaderPly(const rcMeshLoaderPly&) =delete;
-	rcMeshLoaderPly& operator=(const rcMeshLoaderPly&) =delete;
+	rcMeshLoaderBsp(const rcMeshLoaderBsp&) =delete;
+	rcMeshLoaderBsp& operator=(const rcMeshLoaderBsp&) =delete;
 
 	bool load(const std::string& fileName);
 
@@ -39,7 +39,6 @@ public:
 	const std::string& getFileName() const { return m_filename; }
 
 private:
-	
 	std::string m_filename;
 	float m_scale = 1.0;
 	std::vector<float> m_verts;
@@ -47,4 +46,6 @@ private:
 	std::vector<float> m_normals;
 	int m_vertCount = 0;
 	int m_triCount = 0;
+
+	
 };
