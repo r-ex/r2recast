@@ -21,6 +21,7 @@
 #include <cmath>
 
 #include "SDL.h"
+#include "SDL_syswm.h"
 #include "SDL_opengl.h"
 #ifdef __APPLE__
 #	include <OpenGL/glu.h>
@@ -46,9 +47,12 @@
 
 #include "RecastAlloc.h"
 
+
 #ifdef WIN32
 #	define snprintf _snprintf
 #	define putenv _putenv
+#include "commdlg.h"
+
 #endif
 
 using std::string;
@@ -644,7 +648,7 @@ int not_main()
 			const char msg[] = "W/S/A/D: Move  RMB: Rotate";
 			imguiDrawText(280, height-20, IMGUI_ALIGN_LEFT, msg, imguiRGBA(255,255,255,128));
 		}
-		
+		string geom_path;
 		if (showMenu)
 		{
 			if (imguiBeginScrollArea("Properties", width-250-10, 10, 250, height-20, &propScroll))
@@ -675,6 +679,36 @@ int not_main()
 			//if (imguiCheck("Import/Export TF2", tf2_transforms, true))
 			//	tf2_transforms = !tf2_transforms;
 			imguiLabel("Input Mesh");
+			if (imguiButton("Load bsp..."))
+			{
+				char szFile[260];
+				OPENFILENAMEA diag = { 0 };
+				diag.lStructSize = sizeof(diag);
+
+				SDL_SysWMinfo sdlinfo;
+				SDL_version sdlver;
+				SDL_VERSION(&sdlver);
+				sdlinfo.version = sdlver;
+				SDL_GetWindowWMInfo(window, &sdlinfo);
+
+				diag.hwndOwner = sdlinfo.info.win.window;
+
+				diag.lpstrFile = szFile;
+				diag.lpstrFile[0] = 0;
+				diag.nMaxFile = sizeof(szFile);
+				diag.lpstrFilter = "BSP\0*.bsp\0All\0*.*\0";
+				diag.nFilterIndex = 1;
+				diag.lpstrFileTitle = NULL;
+				diag.nMaxFileTitle = 0;
+				diag.lpstrInitialDir = NULL;
+				diag.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+				if (GetOpenFileNameA(&diag))
+				{
+					geom_path = std::string(szFile);
+					meshName = geom_path.substr(geom_path.rfind("\\")+1);
+				}
+			}
 			if (imguiButton(meshName.c_str()))
 			{
 				if (showLevels)
@@ -794,7 +828,7 @@ int not_main()
 			
 			imguiEndScrollArea();
 		}
-		
+
 		// Level selection dialog.
 		if (showLevels)
 		{
@@ -821,62 +855,63 @@ int not_main()
 				delete geom;
 				geom = 0;
 				
-				string path = meshesFolder + "/" + meshName;
-				
-				geom = new InputGeom;
-				if (!geom->load(&ctx, path,tf2_transforms))
-				{
-					delete geom;
-					geom = 0;
-
-					// Destroy the sample if it already had geometry loaded, as we've just deleted it!
-					if (sample && sample->getInputGeom())
-					{
-						delete sample;
-						sample = 0;
-					}
-					
-					showLog = true;
-					logScroll = 0;
-					ctx.dumpLog("Geom load log %s:", meshName.c_str());
-				}
-				if (sample && geom)
-				{
-					sample->handleMeshChanged(geom);
-					sample->m_model_name = meshName.substr(0,meshName.size()-4);
-				}
-
-				if (geom || sample)
-				{
-					const float* bmin = 0;
-					const float* bmax = 0;
-					if (geom)
-					{
-						bmin = geom->getNavMeshBoundsMin();
-						bmax = geom->getNavMeshBoundsMax();
-					}
-					// Reset camera and fog to match the mesh bounds.
-					if (bmin && bmax)
-					{
-						camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-									 rcSqr(bmax[1]-bmin[1]) +
-									 rcSqr(bmax[2]-bmin[2])) / 2;
-						cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-						cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-						cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-						camr *= 3;
-					}
-					cameraEulers[0] = 45;
-					cameraEulers[1] = -45;
-					glFogf(GL_FOG_START, camr * 0.1f);
-					glFogf(GL_FOG_END, camr * 1.25f);
-				}
+				geom_path= meshesFolder + "/" + meshName;
 			}
 			
 			imguiEndScrollArea();
 			
 		}
-		
+		if (!geom_path.empty())
+		{
+			geom = new InputGeom;
+			if (!geom->load(&ctx, geom_path, tf2_transforms))
+			{
+				delete geom;
+				geom = 0;
+
+				// Destroy the sample if it already had geometry loaded, as we've just deleted it!
+				if (sample && sample->getInputGeom())
+				{
+					delete sample;
+					sample = 0;
+				}
+
+				showLog = true;
+				logScroll = 0;
+				ctx.dumpLog("Geom load log %s:", meshName.c_str());
+			}
+			if (sample && geom)
+			{
+				sample->handleMeshChanged(geom);
+				sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+			}
+
+			if (geom || sample)
+			{
+				const float* bmin = 0;
+				const float* bmax = 0;
+				if (geom)
+				{
+					bmin = geom->getNavMeshBoundsMin();
+					bmax = geom->getNavMeshBoundsMax();
+				}
+				// Reset camera and fog to match the mesh bounds.
+				if (bmin && bmax)
+				{
+					camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+						rcSqr(bmax[1] - bmin[1]) +
+						rcSqr(bmax[2] - bmin[2])) / 2;
+					cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+					cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+					cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+					camr *= 3;
+				}
+				cameraEulers[0] = 45;
+				cameraEulers[1] = -45;
+				glFogf(GL_FOG_START, camr * 0.1f);
+				glFogf(GL_FOG_END, camr * 1.25f);
+			}
+		}
 		// Test cases
 		if (showTestCases)
 		{
