@@ -15,60 +15,42 @@
 //    misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 //
-
-#ifndef MESHLOADER_OBJ
-#define MESHLOADER_OBJ
+#pragma once
 
 #include <string>
-class IMeshLoader
+#include <vector>
+#include <MeshLoaderObj.h>
+
+class rcMeshLoaderPly:public IMeshLoader
 {
 public:
-	virtual ~IMeshLoader() {};
+	rcMeshLoaderPly() = default;
+	// Explicitly disabled copy constructor and copy assignment operator.
+	rcMeshLoaderPly(const rcMeshLoaderPly&) =delete;
+	rcMeshLoaderPly& operator=(const rcMeshLoaderPly&) =delete;
 
-	virtual bool load(const std::string& fileName)=0;
-
-	virtual const float* getVerts() const = 0;
-	virtual const float* getNormals() const = 0;
-	virtual const int* getTris() const = 0;
-	virtual int getVertCount() const = 0;
-	virtual int getTriCount() const = 0;
-	virtual const std::string& getFileName() const = 0;
-
-	bool m_tf2_import_flip = true;
-	bool m_flip_tris = true;
-};
-class rcMeshLoaderObj:public IMeshLoader
-{
-public:
-	rcMeshLoaderObj();
-	virtual ~rcMeshLoaderObj();
-	
 	bool load(const std::string& fileName);
 
-	const float* getVerts() const { return m_verts; }
-	const float* getNormals() const { return m_normals; }
-	const int* getTris() const { return m_tris; }
+	const float* getVerts() const { return m_verts.data(); }
+	const float* getNormals() const { return m_normals.data(); }
+	const int* getTris() const { return m_tris.data(); }
 	int getVertCount() const { return m_vertCount; }
 	int getTriCount() const { return m_triCount; }
 	const std::string& getFileName() const { return m_filename; }
 
 private:
-	// Explicitly disabled copy constructor and copy assignment operator.
-	rcMeshLoaderObj(const rcMeshLoaderObj&);
-	rcMeshLoaderObj& operator=(const rcMeshLoaderObj&);
+	
 	
 	void addVertex(float x, float y, float z, int& cap);
 	void addTriangle(int a, int b, int c, int& cap);
 	
 	std::string m_filename;
-	float m_scale;	
-	float* m_verts;
-	int* m_tris;
-	float* m_normals;
-	int m_vertCount;
-	int m_triCount;
+	float m_scale = 1.0;
+	std::vector<float> m_verts;
+	std::vector<int>  m_tris;
+	std::vector<float> m_normals;
+	int m_vertCount = 0;
+	int m_triCount = 0;
 
 	
 };
-
-#endif // MESHLOADER_OBJ

@@ -72,7 +72,7 @@ struct BuildSettings
 class InputGeom
 {
 	rcChunkyTriMesh* m_chunkyMesh;
-	rcMeshLoaderObj* m_mesh;
+	IMeshLoader* m_mesh;
 	float m_meshBMin[3], m_meshBMax[3];
 	BuildSettings m_buildSettings;
 	bool m_hasBuildSettings;
@@ -97,6 +97,7 @@ class InputGeom
 	///@}
 	
 	bool loadMesh(class rcContext* ctx, const std::string& filepath,bool is_tf2);
+	bool loadPlyMesh(class rcContext* ctx, const std::string& filepath, bool is_tf2);
 	bool loadGeomSet(class rcContext* ctx, const std::string& filepath,bool is_tf2);
 public:
 	InputGeom();
@@ -107,7 +108,7 @@ public:
 	bool saveGeomSet(const BuildSettings* settings);
 	
 	/// Method to return static mesh data.
-	const rcMeshLoaderObj* getMesh() const { return m_mesh; }
+	const IMeshLoader* getMesh() const { return m_mesh; }
 	const float* getMeshBoundsMin() const { return m_meshBMin; }
 	const float* getMeshBoundsMax() const { return m_meshBMax; }
 	const float* getNavMeshBoundsMin() const { return m_hasBuildSettings ? m_buildSettings.navMeshBMin : m_meshBMin; }

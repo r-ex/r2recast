@@ -688,6 +688,7 @@ int not_main()
 					showLevels = true;
 					scanDirectory(meshesFolder, ".obj", files);
 					scanDirectoryAppend(meshesFolder, ".gset", files);
+					scanDirectoryAppend(meshesFolder, ".ply", files);
 				}
 			}
 			if (geom)
