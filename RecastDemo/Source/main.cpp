@@ -679,7 +679,7 @@ int not_main()
 			//if (imguiCheck("Import/Export TF2", tf2_transforms, true))
 			//	tf2_transforms = !tf2_transforms;
 			imguiLabel("Input Mesh");
-			if (imguiButton("Load bsp..."))
+			if (imguiButton("Load mesh..."))
 			{
 				char szFile[260];
 				OPENFILENAMEA diag = { 0 };
@@ -696,7 +696,7 @@ int not_main()
 				diag.lpstrFile = szFile;
 				diag.lpstrFile[0] = 0;
 				diag.nMaxFile = sizeof(szFile);
-				diag.lpstrFilter = "BSP\0*.bsp\0All\0*.*\0";
+				diag.lpstrFilter = "BSP\0*.bsp\0Ply\0*.ply\0OBJ\0*.obj\0All\0*.*\0";
 				diag.nFilterIndex = 1;
 				diag.lpstrFileTitle = NULL;
 				diag.nMaxFileTitle = 0;
