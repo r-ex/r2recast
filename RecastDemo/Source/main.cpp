@@ -696,7 +696,7 @@ int not_main()
 				diag.lpstrFile = szFile;
 				diag.lpstrFile[0] = 0;
 				diag.nMaxFile = sizeof(szFile);
-				diag.lpstrFilter = "BSP\0*.bsp\0Ply\0*.ply\0OBJ\0*.obj\0All\0*.*\0";
+				diag.lpstrFilter = "Ply\0*.ply\0OBJ\0*.obj\0All\0*.*\0"; //TODO: BSP\0*.bsp\0
 				diag.nFilterIndex = 1;
 				diag.lpstrFileTitle = NULL;
 				diag.nMaxFileTitle = 0;
