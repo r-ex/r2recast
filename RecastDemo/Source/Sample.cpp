@@ -186,10 +186,10 @@ void Sample::resetCommonSettings()
 	m_count_reachability_tables = 1;
 }
 hulldef hulls[4] = {
-	{"small",16,72,18,512.0f},
-	{"med_short",40,72,18,512.0f},
-	{"medium",48,150,32,512.0f},
-	{"large",60,235,80,960.0f},
+	{"small",8,72*0.5,18,512.0f},
+	{"med_short",20,72*0.5,18,512.0f},
+	{"medium",48,150*0.5,32,512.0f},
+	{"large",60,235*0.5,80,960.0f},
 };
 void Sample::handleCommonSettings()
 {
