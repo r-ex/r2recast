@@ -26,6 +26,7 @@
 
 bool rcMeshLoaderBsp::load(const std::string& filename)
 {
+#if 0
 	//we expect lumps to be in same dir
 
 	using namespace std;
@@ -79,4 +80,6 @@ bool rcMeshLoaderBsp::load(const std::string& filename)
 	
 	m_filename = filename;
 	return true;
+#endif
+	return false;
 }
