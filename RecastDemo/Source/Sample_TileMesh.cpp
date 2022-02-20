@@ -766,6 +766,31 @@ void Sample_TileMesh::buildAllTiles()
 	
 }
 
+//CLEANUP: copied from sample
+extern hulldef hulls[4];/* = {
+	{"small",8,72 * 0.5,18,512.0f},
+	{"med_short",20,72 * 0.5,18,512.0f},
+	{"medium",48,150 * 0.5,32,512.0f},
+	{"large",60,235 * 0.5,80,960.0f},
+};*/
+void Sample_TileMesh::build_n_SaveAllHulls()
+{
+	bool is_human = true;
+	for (auto& h : hulls)
+	{
+		m_agentRadius = h.radius;
+		m_agentMaxClimb = h.climb_height;
+		m_agentHeight = h.height;
+		if (is_human)
+			m_count_reachability_tables = 4;
+		m_navmesh_name = h.name;
+		is_human = false;
+		
+		handleSettings();
+		handleBuild();
+		Sample::saveAll(m_model_name.c_str(), m_navMesh);
+	}
+}
 void Sample_TileMesh::removeAllTiles()
 {
 	if (!m_geom || !m_navMesh)

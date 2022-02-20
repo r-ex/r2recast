@@ -41,7 +41,7 @@ bool rcMeshLoaderBsp::load(const std::string& filename)
 	fseek(vf, 0, SEEK_SET);
 
 	m_verts.resize(fsize / sizeof(float));
-	if (m_verts[i] = fread(&m_vers[i], 4, m_verts.size(), vf) != m_verts.size())
+	if (m_verts[i] = fread(&m_verts[i], 4, m_verts.size(), vf) != m_verts.size())
 	{
 		fclose(vf);
 		return false;

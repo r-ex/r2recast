@@ -153,8 +153,52 @@ void generate_points(float* pts, int count, float dx, float dy, float dz)
 		pts[i * 3+2] = frand()*dz * 2 - dz;
 	}
 }
+
+void do_auto_load(const char* path, BuildContext& ctx,Sample* sample,InputGeom*& geom, string& meshName,bool& tf2_transforms)
+{
+	string geom_path = std::string(path);
+	meshName = geom_path.substr(geom_path.rfind("\\") + 1);
+	geom = new InputGeom;
+	if (!geom->load(&ctx, geom_path, tf2_transforms))
+	{
+		delete geom;
+		geom = 0;
+
+		// Destroy the sample if it already had geometry loaded, as we've just deleted it!
+		/*if (sample && sample->getInputGeom())
+		{
+			delete sample;
+			sample = 0;
+		}*/
+		ctx.dumpLog("Geom load log %s:", meshName.c_str());
+	}
+	if (sample && geom)
+	{
+		sample->handleMeshChanged(geom);
+		sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+	}
+}
+
+void update_camera(const float* bmin, const float* bmax,float* cameraPos,float* cameraEulers,float& camr)
+{
+	// Reset camera and fog to match the mesh bounds.
+	if (bmin && bmax)
+	{
+		camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+			rcSqr(bmax[1] - bmin[1]) +
+			rcSqr(bmax[2] - bmin[2])) / 2;
+		cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+		cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+		cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+		camr *= 3;
+	}
+	cameraEulers[0] = 45;
+	cameraEulers[1] = -125;
+	glFogf(GL_FOG_START, camr * 0.1f);
+	glFogf(GL_FOG_END, camr * 1.25f);
+}
 #if 1
-int main(int /*argc*/, char** /*argv*/)
+int main(int argc, char** argv)
 #else
 //just quick tests for stuff
 
@@ -190,6 +234,11 @@ int main(int /*argc*/, char** /*argv*/)
 int not_main()
 #endif
 {
+	const char* auto_load =nullptr;
+	if (argc > 1)
+	{
+		auto_load = argv[1];
+	}
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
@@ -295,12 +344,44 @@ int not_main()
 	
 	InputGeom* geom = 0;
 	Sample* sample = 0;
+	bool tf2_transforms = false;
 
 	const string testCasesFolder = "TestCases";
 	TestCase* test = 0;
 
 	BuildContext ctx;
 	
+	//Load tiled sample
+
+	sample = g_samples[1].create();
+	sampleName = g_samples[1].name;
+	sample->is_tf2 = &tf2_transforms;
+	sample->setContext(&ctx);
+	if (geom)
+	{
+		sample->handleMeshChanged(geom);
+	}
+	if (auto_load)
+	{
+		do_auto_load(auto_load, ctx, sample, geom, meshName, tf2_transforms);
+		if (geom || sample)
+		{
+			const float* bmin = 0;
+			const float* bmax = 0;
+			if (geom)
+			{
+				bmin = geom->getNavMeshBoundsMin();
+				bmax = geom->getNavMeshBoundsMax();
+			}
+			update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
+		}
+		if (argc > 2)
+		{
+			auto ts = dynamic_cast<Sample_TileMesh*>(sample);
+			ts->build_n_SaveAllHulls();
+			return 0;
+		}
+	}
 	// Fog.
 	float fogColor[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
 	glEnable(GL_FOG);
@@ -311,7 +392,10 @@ int not_main()
 	
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
-	bool tf2_transforms = false;
+
+	
+
+
 	bool done = false;
 	while(!done)
 	{
@@ -810,20 +894,7 @@ int not_main()
 					bmax = geom->getNavMeshBoundsMax();
 				}
 				// Reset camera and fog to match the mesh bounds.
-				if (bmin && bmax)
-				{
-					camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-								 rcSqr(bmax[1]-bmin[1]) +
-								 rcSqr(bmax[2]-bmin[2])) / 2;
-					cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-					cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-					cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-					camr *= 3;
-				}
-				cameraEulers[0] = 45;
-				cameraEulers[1] = -45;
-				glFogf(GL_FOG_START, camr*0.1f);
-				glFogf(GL_FOG_END, camr*1.25f);
+				update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
 			}
 			
 			imguiEndScrollArea();
@@ -896,20 +967,7 @@ int not_main()
 					bmax = geom->getNavMeshBoundsMax();
 				}
 				// Reset camera and fog to match the mesh bounds.
-				if (bmin && bmax)
-				{
-					camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-						rcSqr(bmax[1] - bmin[1]) +
-						rcSqr(bmax[2] - bmin[2])) / 2;
-					cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-					cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-					cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-					camr *= 3;
-				}
-				cameraEulers[0] = 45;
-				cameraEulers[1] = -125;
-				glFogf(GL_FOG_START, camr * 0.1f);
-				glFogf(GL_FOG_END, camr * 1.25f);
+				update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
 			}
 		}
 		// Test cases
@@ -1011,20 +1069,7 @@ int not_main()
 							bmax = geom->getNavMeshBoundsMax();
 						}
 						// Reset camera and fog to match the mesh bounds.
-						if (bmin && bmax)
-						{
-							camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-										 rcSqr(bmax[1] - bmin[1]) +
-										 rcSqr(bmax[2] - bmin[2])) / 2;
-							cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-							cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-							cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-							camr *= 3;
-						}
-						cameraEulers[0] = 45;
-						cameraEulers[1] = 45;
-						glFogf(GL_FOG_START, camr * 0.2f);
-						glFogf(GL_FOG_END, camr * 1.25f);
+						update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
 					}
 					
 					// Do the tests.
