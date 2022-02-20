@@ -821,7 +821,7 @@ int not_main()
 					camr *= 3;
 				}
 				cameraEulers[0] = 45;
-				cameraEulers[1] = 45;
+				cameraEulers[1] = -45;
 				glFogf(GL_FOG_START, camr*0.1f);
 				glFogf(GL_FOG_END, camr*1.25f);
 			}
@@ -907,7 +907,7 @@ int not_main()
 					camr *= 3;
 				}
 				cameraEulers[0] = 45;
-				cameraEulers[1] = -45;
+				cameraEulers[1] = -125;
 				glFogf(GL_FOG_START, camr * 0.1f);
 				glFogf(GL_FOG_END, camr * 1.25f);
 			}
