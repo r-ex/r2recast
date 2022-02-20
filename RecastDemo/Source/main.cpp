@@ -591,10 +591,10 @@ int not_main()
 		moveUp		= rcClamp(moveUp	+ dt * 4 * ((keystate[SDL_SCANCODE_Q] || keystate[SDL_SCANCODE_PAGEUP	]) ? 1 : -1), 0.0f, 1.0f);
 		moveDown	= rcClamp(moveDown	+ dt * 4 * ((keystate[SDL_SCANCODE_E] || keystate[SDL_SCANCODE_PAGEDOWN	]) ? 1 : -1), 0.0f, 1.0f);
 		
-		float keybSpeed = 22.0f;
+		float keybSpeed = 8800.0f;
 		if (SDL_GetModState() & KMOD_SHIFT)
 		{
-			keybSpeed *= 400.0f;
+			keybSpeed *= 2.0f;
 		}
 		
 		float movex = (moveRight - moveLeft) * keybSpeed * dt;
