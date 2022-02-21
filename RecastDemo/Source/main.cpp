@@ -95,14 +95,14 @@ property uchar blue
 element face %d
 property list uchar int vertex_index
 end_header
-)",pts.size()/3,tris.size()/4);
+)",pts.size()/3,tris.size()/3);
 
 	for (size_t i = 0; i < pts.size(); i+=3)
 	{
 		auto c = colors[i / 3];
 		fprintf(f, "%g %g %g %d %d %d\n", pts[i], pts[i + 1], pts[i + 2], c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
 	}
-	for (size_t i = 0; i < tris.size(); i += 4)
+	for (size_t i = 0; i < tris.size(); i += 3)
 	{
 		fprintf(f, "3 %d %d %d\n", tris[i], tris[i + 1], tris[i + 2]);
 	}
@@ -134,7 +134,7 @@ void convex_hull(std::vector<float>& pts, std::vector<int>& hull)
 		endpoint = (point_on_hull + 1) % pt_count;
 		for (int i = 0; i < pt_count; i++)
 		{
-			if (area2(&pts[point_on_hull*3], &pts[i*3], &pts[endpoint*3]) < 0) //reverse this comparison for flipped hull direction
+			if (area2(&pts[point_on_hull*3], &pts[i*3], &pts[endpoint*3]) > 0) //reverse this comparison for flipped hull direction
 				endpoint = i;
 		}
 		point_on_hull = endpoint;
@@ -200,6 +200,8 @@ void update_camera(const float* bmin, const float* bmax,float* cameraPos,float* 
 #if 1
 int main(int argc, char** argv)
 #else
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 //just quick tests for stuff
 
 
@@ -208,7 +210,7 @@ extern void delaunayHull(rcContext* ctx, const int npts, const float* pts,
 	const int nhull, const int* hull,
 	rcIntArray& tris, rcIntArray& edges);
 
-int main(int /*argc*/, char** /*argv*/)
+int main_test_delaunay(int /*argc*/, char** /*argv*/)
 {
 	rcContext ctx;
 	std::vector<float> pts(25*3);
@@ -230,8 +232,87 @@ int main(int /*argc*/, char** /*argv*/)
 	save_ply(pts, colors, tris);
 	return 0;
 }
+void compact_tris(rcIntArray& tris)
+{
+	int j = 3;
+	for (int i = 4; i < tris.size(); i++)
+	{
+		if (i % 4 == 3) continue;
+		tris[j] = tris[i];
+		j++;
+	}
+	tris.resize(j);
+}
+int main(int argc, char** argv)
+{
+	srand(17);
+	rcContext ctx;
+	std::vector<float> pts(8 * 3);
+	std::vector<int> colors(pts.size() / 3, 0xffffffff);
+	generate_points(pts.data(), pts.size() / 3, 10, 10, 10);
 
-int not_main()
+
+	std::vector<int> hull;
+	convex_hull(pts, hull);
+
+	for (auto h : hull)
+		colors[h] = 0xffff0000;
+
+	rcIntArray tris;
+	//save_ply(pts, colors, tris);
+
+	rcIntArray edges;
+	delaunayHull(&ctx, pts.size() / 3, pts.data(), hull.size(), hull.data(), tris, edges);
+	compact_tris(tris);
+	save_ply(pts, colors, tris);
+	int tri_count = tris.size() / 3;
+	std::vector<unsigned char> areas;
+	areas.resize(tri_count);
+	for (int i = 0; i < tri_count; i++)
+		areas[i] = i;
+
+
+	float bmin[3];
+	float bmax[3];
+	rcCalcBounds(pts.data(), pts.size()/3, bmin, bmax);
+
+	float cellSize = .05f;
+	float cellHeight = .05f;
+
+	int width;
+	int height;
+
+	rcCalcGridSize(bmin, bmax, cellSize, &width, &height);
+
+	rcHeightfield solid;
+	rcCreateHeightfield(&ctx, solid, width, height, bmin, bmax, cellSize, cellHeight);
+
+	int flagMergeThr = 1;
+
+	rcRasterizeTriangles(&ctx, pts.data(), pts.size() / 3, tris.data(), areas.data(), tri_count, solid, flagMergeThr);
+
+	std::vector<unsigned char> img_data(width*height);
+	float zdelta = bmax[2] - bmin[2];
+	for(int x=0;x<width;x++)
+		for (int y = 0; y < height; y++)
+		{
+			auto s = solid.spans[x + y * width];
+			if (s )
+			{
+#if 1
+				img_data[x + y * width] = s->area*(235/ (float)tri_count) +20;
+#else
+				img_data[x + y * width]=((s->smax*cellHeight)/zdelta)*255;
+#endif
+				//img_data[x + y * width] = 255;
+			}
+		}
+
+	stbi_write_png("hmap.png", width, height, 1, img_data.data(), width);
+	
+	return 0;
+}
+int not_main(int argc, char** argv)
 #endif
 {
 	const char* auto_load =nullptr;
