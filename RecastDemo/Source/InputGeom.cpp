@@ -26,6 +26,7 @@
 #include "InputGeom.h"
 #include "ChunkyTriMesh.h"
 #include "MeshLoaderObj.h"
+#include "MeshLoaderPly.h"
 #include "DebugDraw.h"
 #include "RecastDebugDraw.h"
 #include "DetourNavMesh.h"
@@ -164,7 +165,48 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2
 
 	return true;
 }
+bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath, bool is_tf2)
+{
+	if (m_mesh)
+	{
+		delete m_chunkyMesh;
+		m_chunkyMesh = 0;
+		delete m_mesh;
+		m_mesh = 0;
+	}
+	m_offMeshConCount = 0;
+	m_volumeCount = 0;
 
+	m_mesh = new rcMeshLoaderPly;
+	//m_mesh->m_flip_tris = is_tf2;
+	m_mesh->m_tf2_import_flip = is_tf2;
+	if (!m_mesh)
+	{
+		ctx->log(RC_LOG_ERROR, "loadMesh: Out of memory 'm_mesh'.");
+		return false;
+	}
+	if (!m_mesh->load(filepath))
+	{
+		ctx->log(RC_LOG_ERROR, "buildTiledNavigation: Could not load '%s'", filepath.c_str());
+		return false;
+	}
+
+	rcCalcBounds(m_mesh->getVerts(), m_mesh->getVertCount(), m_meshBMin, m_meshBMax);
+
+	m_chunkyMesh = new rcChunkyTriMesh;
+	if (!m_chunkyMesh)
+	{
+		ctx->log(RC_LOG_ERROR, "buildTiledNavigation: Out of memory 'm_chunkyMesh'.");
+		return false;
+	}
+	if (!rcCreateChunkyTriMesh(m_mesh->getVerts(), m_mesh->getTris(), m_mesh->getTriCount(), 256, m_chunkyMesh))
+	{
+		ctx->log(RC_LOG_ERROR, "buildTiledNavigation: Failed to build chunky mesh.");
+		return false;
+	}
+
+	return true;
+}
 bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_tf2)
 {
 	//NB(warmist): tf2 not implemented here
@@ -313,6 +355,8 @@ bool InputGeom::load(rcContext* ctx, const std::string& filepath,bool is_tf2)
 		return loadGeomSet(ctx, filepath, is_tf2);
 	if (extension == ".obj")
 		return loadMesh(ctx, filepath, is_tf2);
+	if (extension == ".ply")
+		return loadPlyMesh(ctx, filepath, is_tf2);
 
 	return false;
 }

@@ -21,6 +21,7 @@
 #include <cmath>
 
 #include "SDL.h"
+#include "SDL_syswm.h"
 #include "SDL_opengl.h"
 #ifdef __APPLE__
 #	include <OpenGL/glu.h>
@@ -44,9 +45,14 @@
 #include "Sample_TempObstacles.h"
 #include "Sample_Debug.h"
 
+#include "RecastAlloc.h"
+
+
 #ifdef WIN32
 #	define snprintf _snprintf
 #	define putenv _putenv
+#include "commdlg.h"
+
 #endif
 
 using std::string;
@@ -69,8 +75,251 @@ static SampleItem g_samples[] =
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
-int main(int /*argc*/, char** /*argv*/)
+void save_ply(std::vector<float>& pts,std::vector<int>& colors,rcIntArray& tris)
 {
+	static int counter = 0;
+	char fname[255];
+	sprintf(fname, "out_%d.ply", counter);
+	counter++;
+	auto f = fopen(fname, "wb");
+	fprintf(f,
+R"(ply
+format ascii 1.0
+element vertex %d
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+element face %d
+property list uchar int vertex_index
+end_header
+)",pts.size()/3,tris.size()/3);
+
+	for (size_t i = 0; i < pts.size(); i+=3)
+	{
+		auto c = colors[i / 3];
+		fprintf(f, "%g %g %g %d %d %d\n", pts[i], pts[i + 1], pts[i + 2], c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
+	}
+	for (size_t i = 0; i < tris.size(); i += 3)
+	{
+		fprintf(f, "3 %d %d %d\n", tris[i], tris[i + 1], tris[i + 2]);
+	}
+	
+	fclose(f);
+}
+float area2(const float* a, const float* b, const float* c)
+{
+	return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
+}
+void convex_hull(std::vector<float>& pts, std::vector<int>& hull)
+{
+	int pt_count = pts.size() / 3;
+	int cur_pt = 0;
+	float min_x = pts[0];
+	for(size_t i=0;i<pt_count;i++)
+		if (pts[i * 3] < min_x)
+		{
+			min_x = pts[i * 3];
+			cur_pt = i;
+		}
+
+	
+	int point_on_hull = cur_pt;
+	int endpoint = 0;
+	do
+	{
+		hull.push_back(point_on_hull);
+		endpoint = (point_on_hull + 1) % pt_count;
+		for (int i = 0; i < pt_count; i++)
+		{
+			if (area2(&pts[point_on_hull*3], &pts[i*3], &pts[endpoint*3]) > 0) //reverse this comparison for flipped hull direction
+				endpoint = i;
+		}
+		point_on_hull = endpoint;
+	} while (endpoint != hull[0]);
+}
+float frand()
+{
+	return rand() / (float)RAND_MAX;
+}
+void generate_points(float* pts, int count, float dx, float dy, float dz)
+{
+	for (int i = 0; i < count; i++)
+	{
+		pts[i * 3+0] = frand()*dx * 2 - dx;
+		pts[i * 3+1] = frand()*dy * 2 - dy;
+		pts[i * 3+2] = frand()*dz * 2 - dz;
+	}
+}
+
+void do_auto_load(const char* path, BuildContext& ctx,Sample* sample,InputGeom*& geom, string& meshName,bool& tf2_transforms)
+{
+	string geom_path = std::string(path);
+	meshName = geom_path.substr(geom_path.rfind("\\") + 1);
+	geom = new InputGeom;
+	if (!geom->load(&ctx, geom_path, tf2_transforms))
+	{
+		delete geom;
+		geom = 0;
+
+		// Destroy the sample if it already had geometry loaded, as we've just deleted it!
+		/*if (sample && sample->getInputGeom())
+		{
+			delete sample;
+			sample = 0;
+		}*/
+		ctx.dumpLog("Geom load log %s:", meshName.c_str());
+	}
+	if (sample && geom)
+	{
+		sample->handleMeshChanged(geom);
+		sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+	}
+}
+
+void update_camera(const float* bmin, const float* bmax,float* cameraPos,float* cameraEulers,float& camr)
+{
+	// Reset camera and fog to match the mesh bounds.
+	if (bmin && bmax)
+	{
+		camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+			rcSqr(bmax[1] - bmin[1]) +
+			rcSqr(bmax[2] - bmin[2])) / 2;
+		cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
+		cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
+		cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
+		camr *= 3;
+	}
+	cameraEulers[0] = 45;
+	cameraEulers[1] = -125;
+	glFogf(GL_FOG_START, camr * 0.1f);
+	glFogf(GL_FOG_END, camr * 1.25f);
+}
+#if 1
+int main(int argc, char** argv)
+#else
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+//just quick tests for stuff
+
+
+
+extern void delaunayHull(rcContext* ctx, const int npts, const float* pts,
+	const int nhull, const int* hull,
+	rcIntArray& tris, rcIntArray& edges);
+
+int main_test_delaunay(int /*argc*/, char** /*argv*/)
+{
+	rcContext ctx;
+	std::vector<float> pts(25*3);
+	std::vector<int> colors(pts.size() / 3, 0xffffffff);
+	generate_points(pts.data(), pts.size()/3, 10, 10, 2);
+	
+
+	std::vector<int> hull;
+	convex_hull(pts,hull);
+
+	for (auto h : hull)
+		colors[h] = 0xffff0000;
+
+	rcIntArray tris;
+	save_ply(pts, colors, tris);
+
+	rcIntArray edges;
+	delaunayHull(&ctx, pts.size()/3, pts.data(), hull.size(), hull.data(), tris, edges);
+	save_ply(pts, colors, tris);
+	return 0;
+}
+void compact_tris(rcIntArray& tris)
+{
+	int j = 3;
+	for (int i = 4; i < tris.size(); i++)
+	{
+		if (i % 4 == 3) continue;
+		tris[j] = tris[i];
+		j++;
+	}
+	tris.resize(j);
+}
+int main(int argc, char** argv)
+{
+	srand(17);
+	rcContext ctx;
+	std::vector<float> pts(8 * 3);
+	std::vector<int> colors(pts.size() / 3, 0xffffffff);
+	generate_points(pts.data(), pts.size() / 3, 10, 10, 10);
+
+
+	std::vector<int> hull;
+	convex_hull(pts, hull);
+
+	for (auto h : hull)
+		colors[h] = 0xffff0000;
+
+	rcIntArray tris;
+	//save_ply(pts, colors, tris);
+
+	rcIntArray edges;
+	delaunayHull(&ctx, pts.size() / 3, pts.data(), hull.size(), hull.data(), tris, edges);
+	compact_tris(tris);
+	save_ply(pts, colors, tris);
+	int tri_count = tris.size() / 3;
+	std::vector<unsigned char> areas;
+	areas.resize(tri_count);
+	for (int i = 0; i < tri_count; i++)
+		areas[i] = i;
+
+
+	float bmin[3];
+	float bmax[3];
+	rcCalcBounds(pts.data(), pts.size()/3, bmin, bmax);
+
+	float cellSize = .05f;
+	float cellHeight = .05f;
+
+	int width;
+	int height;
+
+	rcCalcGridSize(bmin, bmax, cellSize, &width, &height);
+
+	rcHeightfield solid;
+	rcCreateHeightfield(&ctx, solid, width, height, bmin, bmax, cellSize, cellHeight);
+
+	int flagMergeThr = 1;
+
+	rcRasterizeTriangles(&ctx, pts.data(), pts.size() / 3, tris.data(), areas.data(), tri_count, solid, flagMergeThr);
+
+	std::vector<unsigned char> img_data(width*height);
+	float zdelta = bmax[2] - bmin[2];
+	for(int x=0;x<width;x++)
+		for (int y = 0; y < height; y++)
+		{
+			auto s = solid.spans[x + y * width];
+			if (s )
+			{
+#if 1
+				img_data[x + y * width] = s->area*(235/ (float)tri_count) +20;
+#else
+				img_data[x + y * width]=((s->smax*cellHeight)/zdelta)*255;
+#endif
+				//img_data[x + y * width] = 255;
+			}
+		}
+
+	stbi_write_png("hmap.png", width, height, 1, img_data.data(), width);
+	
+	return 0;
+}
+int not_main(int argc, char** argv)
+#endif
+{
+	const char* auto_load =nullptr;
+	if (argc > 1)
+	{
+		auto_load = argv[1];
+	}
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
@@ -176,12 +425,44 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	InputGeom* geom = 0;
 	Sample* sample = 0;
+	bool tf2_transforms = false;
 
 	const string testCasesFolder = "TestCases";
 	TestCase* test = 0;
 
 	BuildContext ctx;
 	
+	//Load tiled sample
+
+	sample = g_samples[1].create();
+	sampleName = g_samples[1].name;
+	sample->is_tf2 = &tf2_transforms;
+	sample->setContext(&ctx);
+	if (geom)
+	{
+		sample->handleMeshChanged(geom);
+	}
+	if (auto_load)
+	{
+		do_auto_load(auto_load, ctx, sample, geom, meshName, tf2_transforms);
+		if (geom || sample)
+		{
+			const float* bmin = 0;
+			const float* bmax = 0;
+			if (geom)
+			{
+				bmin = geom->getNavMeshBoundsMin();
+				bmax = geom->getNavMeshBoundsMax();
+			}
+			update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
+		}
+		if (argc > 2)
+		{
+			auto ts = dynamic_cast<Sample_TileMesh*>(sample);
+			ts->build_n_SaveAllHulls();
+			return 0;
+		}
+	}
 	// Fog.
 	float fogColor[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
 	glEnable(GL_FOG);
@@ -192,7 +473,10 @@ int main(int /*argc*/, char** /*argv*/)
 	
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
-	bool tf2_transforms = false;
+
+	
+
+
 	bool done = false;
 	while(!done)
 	{
@@ -472,10 +756,10 @@ int main(int /*argc*/, char** /*argv*/)
 		moveUp		= rcClamp(moveUp	+ dt * 4 * ((keystate[SDL_SCANCODE_Q] || keystate[SDL_SCANCODE_PAGEUP	]) ? 1 : -1), 0.0f, 1.0f);
 		moveDown	= rcClamp(moveDown	+ dt * 4 * ((keystate[SDL_SCANCODE_E] || keystate[SDL_SCANCODE_PAGEDOWN	]) ? 1 : -1), 0.0f, 1.0f);
 		
-		float keybSpeed = 22.0f;
+		float keybSpeed = 8800.0f;
 		if (SDL_GetModState() & KMOD_SHIFT)
 		{
-			keybSpeed *= 400.0f;
+			keybSpeed *= 2.0f;
 		}
 		
 		float movex = (moveRight - moveLeft) * keybSpeed * dt;
@@ -529,7 +813,7 @@ int main(int /*argc*/, char** /*argv*/)
 			const char msg[] = "W/S/A/D: Move  RMB: Rotate";
 			imguiDrawText(280, height-20, IMGUI_ALIGN_LEFT, msg, imguiRGBA(255,255,255,128));
 		}
-		
+		string geom_path;
 		if (showMenu)
 		{
 			if (imguiBeginScrollArea("Properties", width-250-10, 10, 250, height-20, &propScroll))
@@ -560,6 +844,36 @@ int main(int /*argc*/, char** /*argv*/)
 			//if (imguiCheck("Import/Export TF2", tf2_transforms, true))
 			//	tf2_transforms = !tf2_transforms;
 			imguiLabel("Input Mesh");
+			if (imguiButton("Load mesh..."))
+			{
+				char szFile[260];
+				OPENFILENAMEA diag = { 0 };
+				diag.lStructSize = sizeof(diag);
+
+				SDL_SysWMinfo sdlinfo;
+				SDL_version sdlver;
+				SDL_VERSION(&sdlver);
+				sdlinfo.version = sdlver;
+				SDL_GetWindowWMInfo(window, &sdlinfo);
+
+				diag.hwndOwner = sdlinfo.info.win.window;
+
+				diag.lpstrFile = szFile;
+				diag.lpstrFile[0] = 0;
+				diag.nMaxFile = sizeof(szFile);
+				diag.lpstrFilter = "Ply\0*.ply\0OBJ\0*.obj\0All\0*.*\0"; //TODO: BSP\0*.bsp\0
+				diag.nFilterIndex = 1;
+				diag.lpstrFileTitle = NULL;
+				diag.nMaxFileTitle = 0;
+				diag.lpstrInitialDir = NULL;
+				diag.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+				if (GetOpenFileNameA(&diag))
+				{
+					geom_path = std::string(szFile);
+					meshName = geom_path.substr(geom_path.rfind("\\")+1);
+				}
+			}
 			if (imguiButton(meshName.c_str()))
 			{
 				if (showLevels)
@@ -573,6 +887,7 @@ int main(int /*argc*/, char** /*argv*/)
 					showLevels = true;
 					scanDirectory(meshesFolder, ".obj", files);
 					scanDirectoryAppend(meshesFolder, ".gset", files);
+					scanDirectoryAppend(meshesFolder, ".ply", files);
 				}
 			}
 			if (geom)
@@ -660,25 +975,12 @@ int main(int /*argc*/, char** /*argv*/)
 					bmax = geom->getNavMeshBoundsMax();
 				}
 				// Reset camera and fog to match the mesh bounds.
-				if (bmin && bmax)
-				{
-					camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-								 rcSqr(bmax[1]-bmin[1]) +
-								 rcSqr(bmax[2]-bmin[2])) / 2;
-					cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-					cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-					cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-					camr *= 3;
-				}
-				cameraEulers[0] = 45;
-				cameraEulers[1] = 45;
-				glFogf(GL_FOG_START, camr*0.1f);
-				glFogf(GL_FOG_END, camr*1.25f);
+				update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
 			}
 			
 			imguiEndScrollArea();
 		}
-		
+
 		// Level selection dialog.
 		if (showLevels)
 		{
@@ -705,62 +1007,50 @@ int main(int /*argc*/, char** /*argv*/)
 				delete geom;
 				geom = 0;
 				
-				string path = meshesFolder + "/" + meshName;
-				
-				geom = new InputGeom;
-				if (!geom->load(&ctx, path,tf2_transforms))
-				{
-					delete geom;
-					geom = 0;
-
-					// Destroy the sample if it already had geometry loaded, as we've just deleted it!
-					if (sample && sample->getInputGeom())
-					{
-						delete sample;
-						sample = 0;
-					}
-					
-					showLog = true;
-					logScroll = 0;
-					ctx.dumpLog("Geom load log %s:", meshName.c_str());
-				}
-				if (sample && geom)
-				{
-					sample->handleMeshChanged(geom);
-					sample->m_model_name = meshName.substr(0,meshName.size()-4);
-				}
-
-				if (geom || sample)
-				{
-					const float* bmin = 0;
-					const float* bmax = 0;
-					if (geom)
-					{
-						bmin = geom->getNavMeshBoundsMin();
-						bmax = geom->getNavMeshBoundsMax();
-					}
-					// Reset camera and fog to match the mesh bounds.
-					if (bmin && bmax)
-					{
-						camr = sqrtf(rcSqr(bmax[0]-bmin[0]) +
-									 rcSqr(bmax[1]-bmin[1]) +
-									 rcSqr(bmax[2]-bmin[2])) / 2;
-						cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-						cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-						cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-						camr *= 3;
-					}
-					cameraEulers[0] = 45;
-					cameraEulers[1] = -45;
-					glFogf(GL_FOG_START, camr * 0.1f);
-					glFogf(GL_FOG_END, camr * 1.25f);
-				}
+				geom_path= meshesFolder + "/" + meshName;
 			}
 			
 			imguiEndScrollArea();
 			
 		}
-		
+		if (!geom_path.empty())
+		{
+			geom = new InputGeom;
+			if (!geom->load(&ctx, geom_path, tf2_transforms))
+			{
+				delete geom;
+				geom = 0;
+
+				// Destroy the sample if it already had geometry loaded, as we've just deleted it!
+				if (sample && sample->getInputGeom())
+				{
+					delete sample;
+					sample = 0;
+				}
+
+				showLog = true;
+				logScroll = 0;
+				ctx.dumpLog("Geom load log %s:", meshName.c_str());
+			}
+			if (sample && geom)
+			{
+				sample->handleMeshChanged(geom);
+				sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+			}
+
+			if (geom || sample)
+			{
+				const float* bmin = 0;
+				const float* bmax = 0;
+				if (geom)
+				{
+					bmin = geom->getNavMeshBoundsMin();
+					bmax = geom->getNavMeshBoundsMax();
+				}
+				// Reset camera and fog to match the mesh bounds.
+				update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
+			}
+		}
 		// Test cases
 		if (showTestCases)
 		{
@@ -860,20 +1150,7 @@ int main(int /*argc*/, char** /*argv*/)
 							bmax = geom->getNavMeshBoundsMax();
 						}
 						// Reset camera and fog to match the mesh bounds.
-						if (bmin && bmax)
-						{
-							camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-										 rcSqr(bmax[1] - bmin[1]) +
-										 rcSqr(bmax[2] - bmin[2])) / 2;
-							cameraPos[0] = (bmax[0] + bmin[0]) / 2 + camr;
-							cameraPos[1] = (bmax[1] + bmin[1]) / 2 + camr;
-							cameraPos[2] = (bmax[2] + bmin[2]) / 2 + camr;
-							camr *= 3;
-						}
-						cameraEulers[0] = 45;
-						cameraEulers[1] = 45;
-						glFogf(GL_FOG_START, camr * 0.2f);
-						glFogf(GL_FOG_END, camr * 1.25f);
+						update_camera(bmin, bmax, cameraPos, cameraEulers, camr);
 					}
 					
 					// Do the tests.

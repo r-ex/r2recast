@@ -166,7 +166,7 @@ bool rcCreateChunkyTriMesh(const float* verts, const int* tris, int ntris,
 		it.i = i;
 		// Calc triangle XY bounds.
 		it.bmin[0] = it.bmax[0] = verts[t[0]*3+0];
-		it.bmin[1] = it.bmax[1] = verts[t[0]*3+2];
+		it.bmin[1] = it.bmax[1] = verts[t[0]*3+1];
 		for (int j = 1; j < 3; ++j)
 		{
 			const float* v = &verts[t[j]*3];
