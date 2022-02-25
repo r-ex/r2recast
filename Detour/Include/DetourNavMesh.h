@@ -262,7 +262,7 @@ struct dtMeshHeader
 	int y;					///< The y-position of the tile within the dtNavMesh tile grid. (x, y, layer)
 	int layer;				///< The layer of the tile within the dtNavMesh tile grid. (x, y, layer)
 
-	int unk0;				// This gets set to -1 in 'Detour_LevelInit()' [r5apex.exe + 0xEF86C9).
+	//int unk0;				// This gets set to -1 in 'Detour_LevelInit()' [r5apex.exe + 0xEF86C9).
 
 	unsigned int userId;	///< The user defined id of the tile.
 	int polyCount;			///< The number of polygons in the tile.
@@ -289,6 +289,7 @@ struct dtMeshHeader
 	
 	/// The bounding volume quantization factor. 
 	float bvQuantFactor;
+	//int unk0;
 };
 
 /// Defines a navigation mesh tile.
@@ -318,6 +319,9 @@ struct dtMeshTile
 	dtOffMeshConnection* offMeshCons;		///< The tile off-mesh connections. [Size: dtMeshHeader::offMeshConCount]
 		
 	unsigned char* data;					///< The tile data. (Not directly accessed under normal situations.)
+
+	void* unk0;								///<  Seems shifted with 8 bytes from here (the rest seems to line up with r2) see field assignments in 'r5apex.exe 0x140F44A00'
+
 	int dataSize;							///< Size of the tile data.
 	int flags;								///< Tile flags. (See: #dtTileFlags)
 	dtMeshTile* next;						///< The next free tile, or the next tile in the spatial grid.
