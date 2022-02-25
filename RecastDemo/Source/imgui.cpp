@@ -415,7 +415,7 @@ void imguiEndScrollArea()
 		{
 			if (g_state.scroll)
 			{
-				*g_scrollVal += 20*g_state.scroll;
+				*g_scrollVal += 80*g_state.scroll;
 				if (*g_scrollVal < 0) *g_scrollVal = 0;
 				if (*g_scrollVal > (sh - h)) *g_scrollVal = (sh - h);
 			}
