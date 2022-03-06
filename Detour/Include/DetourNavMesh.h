@@ -27,12 +27,12 @@
 // Note: tiles build using 32bit refs are not compatible with 64bit refs!
 //#define DT_POLYREF64 1
 
-#ifdef DT_POLYREF64
+//#ifdef DT_POLYREF64
 // TODO: figure out a multiplatform version of uint64_t
 // - maybe: https://code.google.com/p/msinttypes/
 // - or: http://www.azillionmonkeys.com/qed/pstdint.h
 #include <stdint.h>
-#endif
+//#endif
 
 // Note: If you want to use 64-bit refs, change the types of both dtPolyRef & dtTileRef.
 // It is also recommended that you change dtHashRef() to a proper 64-bit hash.
@@ -289,7 +289,7 @@ struct dtMeshHeader
 	
 	/// The bounding volume quantization factor. 
 	float bvQuantFactor;
-	//int unk0;
+	//int unk0 = -1;
 };
 
 /// Defines a navigation mesh tile.
@@ -321,6 +321,9 @@ struct dtMeshTile
 	unsigned char* data;					///< The tile data. (Not directly accessed under normal situations.)
 
 	void* unk0;								///<  Seems shifted with 8 bytes from here (the rest seems to line up with r2) see field assignments in 'r5apex.exe 0x140F44A00'
+	void* unk1;
+
+	//int unk0;
 
 	int dataSize;							///< Size of the tile data.
 	int flags;								///< Tile flags. (See: #dtTileFlags)
@@ -691,12 +694,14 @@ private:
 	dtMeshTile** m_posLookup;			///< Tile hash lookup.
 	dtMeshTile* m_nextFree;				///< Freelist of tiles.
 	dtMeshTile* m_tiles;				///< List of tiles.
-		
-#ifndef DT_POLYREF64
+
+	//int unk0;
+//#ifndef DT_POLYREF64
+
 	unsigned int m_saltBits;			///< Number of salt bits in the tile ID.
 	unsigned int m_tileBits;			///< Number of tile bits in the tile ID.
 	unsigned int m_polyBits;			///< Number of poly bits in the tile ID.
-#endif
+//#endif
 
 	friend class dtNavMeshQuery;
 };
