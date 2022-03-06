@@ -187,11 +187,12 @@ void Sample::resetCommonSettings()
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
 	m_count_reachability_tables = 1;
 }
-hulldef hulls[4] = {
-	{"small",8,72*0.5,18,512.0f},
-	{"med_short",20,72*0.5,18,512.0f},
-	{"medium",48,150*0.5,32,512.0f},
+hulldef hulls[5] = {
+	{"small",8,72*0.5,70,512.0f},
+	{"med_short",20,72*0.5,75,512.0f},
+	{"medium",48,150*0.5,77,512.0f},
 	{"large",60,235*0.5,80,960.0f},
+	{"extra_large",88,235*0.5,80,960.0f},
 };
 void Sample::handleCommonSettings()
 {
