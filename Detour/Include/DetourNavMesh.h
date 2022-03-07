@@ -178,6 +178,8 @@ struct dtPoly
 	unsigned short unk;						//IDK but looks filled
 	float org[3];					//NO IDEA
 
+	int unk1;						// dtPoly is 4 bytes larger in r5apex.
+
 	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
 	inline void setArea(unsigned char a) { areaAndtype = (areaAndtype & 0xc0) | (a & 0x3f); }
 
