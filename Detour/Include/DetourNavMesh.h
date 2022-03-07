@@ -358,11 +358,11 @@ struct dtNavMeshParams
 	int disjoint_poly_group_count = 0;
 	int reachability_table_size = 0;
 	int reachability_table_count = 0;
-	int unk0 = 0; // the header of Apex is 4 bytes longer then Titanfall 2. The DNAV block won't get copied into the buffer without this resulting in a crash.
 };
 
 /// A navigation mesh based on tiles of convex polygons.
 /// @ingroup detour
+#pragma pack(push, 1)
 class dtNavMesh
 {
 public:
@@ -696,15 +696,17 @@ private:
 	dtMeshTile* m_tiles;				///< List of tiles.
 
 	//int unk0;
-//#ifndef DT_POLYREF64
+#ifndef DT_POLYREF64
 
 	unsigned int m_saltBits;			///< Number of salt bits in the tile ID.
 	unsigned int m_tileBits;			///< Number of tile bits in the tile ID.
 	unsigned int m_polyBits;			///< Number of poly bits in the tile ID.
-//#endif
+#endif
+	int unk1 = 0; // !TODO: Find out where this field is getting used and if this is aligned properly here.
 
 	friend class dtNavMeshQuery;
 };
+#pragma pack(pop)
 
 /// Allocates a navigation mesh object using the Detour allocator.
 /// @return A navigation mesh that is ready for initialization, or null on failure.
