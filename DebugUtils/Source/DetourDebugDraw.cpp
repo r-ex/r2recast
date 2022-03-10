@@ -144,7 +144,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			if (flags & DU_DRAWNAVMESH_COLOR_TILES)
 				col = tileColor;
 			else
-				col = duTransCol(dd->areaToCol(p->getArea()), 64);
+				col = duTransCol(dd->areaToCol(p->getArea()), 170);
 		}
 		
 		for (int j = 0; j < pd->triCount; ++j)

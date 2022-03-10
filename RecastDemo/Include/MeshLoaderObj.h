@@ -34,8 +34,8 @@ public:
 	virtual int getTriCount() const = 0;
 	virtual const std::string& getFileName() const = 0;
 
-	bool m_tf2_import_flip = true;
-	bool m_flip_tris = true;
+	bool m_tf2_import_flip = false; // !TODO: ImGui import option.
+	bool m_flip_tris = false;       // !TODO: ImGui import option.
 };
 class rcMeshLoaderObj:public IMeshLoader
 {

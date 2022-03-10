@@ -322,7 +322,7 @@ struct dtMeshTile
 		
 	unsigned char* data;					///< The tile data. (Not directly accessed under normal situations.)
 
-	void* unk0;								///<  Seems shifted with 8 bytes from here (the rest seems to line up with r2) see field assignments in 'r5apex.exe 0x140F44A00'
+	void* meshLink;							///<  Seems shifted with 8 bytes from here (the rest seems to line up with r2) see field assignments in 'r5apex.exe 0x140F44A00'
 
 	int dataSize;							///< Size of the tile data.
 	int flags;								///< Tile flags. (See: #dtTileFlags)
@@ -685,26 +685,22 @@ private:
 	
 	dtNavMeshParams m_params;			///< Current initialization params. TODO: do not store this info twice.
 	float m_orig[3];					///< Origin of the tile (0,0)
-	float something = 0;
 	float m_tileWidth, m_tileHeight;	///< Dimensions of each tile.
 	int m_maxTiles;						///< Max number of tiles.
 	int m_tileLutSize;					///< Tile hash lookup size (must be pot).
+	int m_tileLutMask;					///< Tile hash lookup mask.
 
 	dtMeshTile** m_posLookup;			///< Tile hash lookup.
 	dtMeshTile* m_nextFree;				///< Freelist of tiles.
 
-	// Seems moved to here? The only way I could make things line up. Need to confirm later.
-	int m_tileLutMask;					///< Tile hash lookup mask.
+	int unk0;							///< No idea. '[r5apex_ds.exe + 0xf439d1] this->unk0 = LODWORD(params[1].orig[0])'
 	dtMeshTile* m_tiles;				///< List of tiles.
-
-	//int unk0;
 #ifndef DT_POLYREF64
 
 	unsigned int m_saltBits;			///< Number of salt bits in the tile ID.
 	unsigned int m_tileBits;			///< Number of tile bits in the tile ID.
 	unsigned int m_polyBits;			///< Number of poly bits in the tile ID.
 #endif
-
 	friend class dtNavMeshQuery;
 };
 #pragma pack(pop)

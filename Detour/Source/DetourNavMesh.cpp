@@ -225,9 +225,11 @@ dtStatus dtNavMesh::init(const dtNavMeshParams* params)
 {
 	memcpy(&m_params, params, sizeof(dtNavMeshParams));
 	dtVcopy(m_orig, params->orig);
+	unk0 = params->orig[1];
+
 	m_tileWidth = params->tileWidth;
 	m_tileHeight = params->tileHeight;
-	
+
 	// Init tiles
 	m_maxTiles = params->maxTiles;
 	m_tileLutSize = dtNextPow2(params->maxTiles/4);
@@ -1018,7 +1020,7 @@ dtStatus dtNavMesh::addTile(unsigned char* data, int dataSize, int flags,
 	// Init tile.
 	tile->header = header;
 	tile->data = data;
-	tile->unk0 = &data[offMeshLinksSize]; // tile + 58h = &v33[v17];
+	tile->meshLink = &data[offMeshLinksSize]; // tile + 58h = &v33[v17];
 	tile->dataSize = dataSize;
 	tile->flags = flags;
 
