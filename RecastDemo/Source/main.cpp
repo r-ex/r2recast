@@ -474,9 +474,6 @@ int not_main(int argc, char** argv)
 	glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LEQUAL);
 
-	
-
-
 	bool done = false;
 	while(!done)
 	{

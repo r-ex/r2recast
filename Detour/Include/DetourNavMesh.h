@@ -174,11 +174,10 @@ struct dtPoly
 	/// @note Use the structure's set and get methods to acess this value.
 	unsigned char areaAndtype;
 
-	unsigned short link_table_idx;						//IDK but looks filled
+	unsigned short link_table_idx;			//IDK but looks filled
 	unsigned short unk;						//IDK but looks filled
-	float org[3];					//NO IDEA
-
-	int unk1;						// dtPoly is 4 bytes larger in r5apex.
+	int unk1;								//!TODO: debug this if you ever find where this gets used in the engine..
+	float org[3];							// Seems to be used for AIN file generation (build from large navmesh).
 
 	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
 	inline void setArea(unsigned char a) { areaAndtype = (areaAndtype & 0xc0) | (a & 0x3f); }
@@ -264,8 +263,6 @@ struct dtMeshHeader
 	int y;					///< The y-position of the tile within the dtNavMesh tile grid. (x, y, layer)
 	int layer;				///< The layer of the tile within the dtNavMesh tile grid. (x, y, layer)
 
-	//int unk0;				// This gets set to -1 in 'Detour_LevelInit()' [r5apex.exe + 0xEF86C9).
-
 	unsigned int userId;	///< The user defined id of the tile.
 	int polyCount;			///< The number of polygons in the tile.
 	int sth_per_poly;
@@ -280,18 +277,18 @@ struct dtMeshHeader
 	int detailTriCount;			///< The number of triangles in the detail mesh.
 	int bvNodeCount;			///< The number of bounding volume nodes. (Zero if bounding volumes are disabled.)
 	int offMeshConCount;		///< The number of off-mesh connections.
-	//int unk1;
 	int offMeshBase;			///< The index of the first polygon which is an off-mesh connection.
 
 	float walkableHeight;		///< The height of the agents using the tile.
 	float walkableRadius;		///< The radius of the agents using the tile.
 	float walkableClimb;		///< The maximum climb height of the agents using the tile.
+	int unk1;
 	float bmin[3];				///< The minimum bounds of the tile's AABB. [(x, y, z)]
 	float bmax[3];				///< The maximum bounds of the tile's AABB. [(x, y, z)]
 	
 	/// The bounding volume quantization factor. 
 	float bvQuantFactor;
-	int unk0;
+	//int unk0;
 };
 
 /// Defines a navigation mesh tile.
@@ -692,9 +689,9 @@ private:
 
 	dtMeshTile** m_posLookup;			///< Tile hash lookup.
 	dtMeshTile* m_nextFree;				///< Freelist of tiles.
-
-	int unk0;							///< No idea. '[r5apex_ds.exe + 0xf439d1] this->unk0 = LODWORD(params[1].orig[0])'
 	dtMeshTile* m_tiles;				///< List of tiles.
+
+	int nodePoolIdx;					///< Seems to be the node pool index? "[r5apex_ds.exe + 0xf4bfc0] e.g. 'dtNodePool::getNodeIdx(*&g_pdtNavMesh.unk0, node);'"
 #ifndef DT_POLYREF64
 
 	unsigned int m_saltBits;			///< Number of salt bits in the tile ID.

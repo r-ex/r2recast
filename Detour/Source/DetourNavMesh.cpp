@@ -225,7 +225,7 @@ dtStatus dtNavMesh::init(const dtNavMeshParams* params)
 {
 	memcpy(&m_params, params, sizeof(dtNavMeshParams));
 	dtVcopy(m_orig, params->orig);
-	unk0 = params->orig[1];
+	nodePoolIdx = params->orig[1];
 
 	m_tileWidth = params->tileWidth;
 	m_tileHeight = params->tileHeight;
