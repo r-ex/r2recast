@@ -122,8 +122,8 @@ void ConvexVolumeTool::reset()
 
 void ConvexVolumeTool::handleMenu()
 {
-	imguiSlider("Shape Height", &m_boxHeight, 0.1f, 20.0f, 0.1f);
-	imguiSlider("Shape Descent", &m_boxDescent, 0.1f, 20.0f, 0.1f);
+	imguiSlider("Shape Height", &m_boxHeight, 0.1f, 1000.0f, 0.1f);
+	imguiSlider("Shape Descent", &m_boxDescent, 0.1f, 1000.0f, 0.1f);
 	imguiSlider("Poly Offset", &m_polyOffset, 0.0f, 10.0f, 0.1f);
 
 	imguiSeparator();
@@ -167,7 +167,7 @@ void ConvexVolumeTool::handleClick(const float* /*s*/, const float* p, bool shif
 		for (int i = 0; i < geom->getConvexVolumeCount(); ++i)
 		{
 			if (pointInPoly(vols[i].nverts, vols[i].verts, p) &&
-							p[1] >= vols[i].hmin && p[1] <= vols[i].hmax)
+							p[2] >= vols[i].hmin && p[2] <= vols[i].hmax)
 			{
 				nearestIndex = i;
 			}
@@ -183,7 +183,7 @@ void ConvexVolumeTool::handleClick(const float* /*s*/, const float* p, bool shif
 		// Create
 
 		// If clicked on that last pt, create the shape.
-		if (m_npts && rcVdistSqr(p, &m_pts[(m_npts-1)*3]) < rcSqr(0.2f))
+		if (m_npts && rcVdistSqr(p, &m_pts[(m_npts-1)*3]) < rcSqr(20.0f))
 		{
 			if (m_nhull > 2)
 			{
@@ -194,7 +194,7 @@ void ConvexVolumeTool::handleClick(const float* /*s*/, const float* p, bool shif
 					
 				float minh = FLT_MAX, maxh = 0;
 				for (int i = 0; i < m_nhull; ++i)
-					minh = rcMin(minh, verts[i*3+1]);
+					minh = rcMin(minh, verts[i*3+2]);
 				minh -= m_boxDescent;
 				maxh = minh + m_boxHeight;
 
@@ -251,7 +251,7 @@ void ConvexVolumeTool::handleRender()
 	// Find height extent of the shape.
 	float minh = FLT_MAX, maxh = 0;
 	for (int i = 0; i < m_npts; ++i)
-		minh = rcMin(minh, m_pts[i*3+1]);
+		minh = rcMin(minh, m_pts[i*3+2]);
 	minh -= m_boxDescent;
 	maxh = minh + m_boxHeight;
 
@@ -270,12 +270,12 @@ void ConvexVolumeTool::handleRender()
 	{
 		const float* vi = &m_pts[m_hull[j]*3];
 		const float* vj = &m_pts[m_hull[i]*3];
-		dd.vertex(vj[0],vj[1], minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0], vj[1], minh, duRGBA(255, 255, 255, 64));
 		dd.vertex(vi[0], vi[1], minh, duRGBA(255, 255, 255, 64));
 		dd.vertex(vj[0], vj[1], maxh, duRGBA(255, 255, 255, 64));
 		dd.vertex(vi[0], vi[1], maxh, duRGBA(255, 255, 255, 64));
 		dd.vertex(vj[0], vj[1], minh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vj[0], vj[1], maxh, duRGBA(255,255,255,64));
+		dd.vertex(vj[0], vj[1], maxh, duRGBA(255, 255, 255, 64));
 	}
 	dd.end();	
 }
