@@ -335,7 +335,7 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigne
 	if (minx < 0) minx = 0;
 	if (maxx >= chf.width) maxx = chf.width-1;
 	if (miny < 0) miny = 0;
-	if (maxy >= chf.height) maxy = chf.height-1;	
+	if (maxy >= chf.height) maxy = chf.height-1;
 	
 	for (int y = miny; y <= maxy; ++y)
 	{
@@ -375,7 +375,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 /// The value of spacial parameters are in world units.
 /// 
 /// The y-values of the polygon vertices are ignored. So the polygon is effectively 
-/// projected onto the xz-plane at @p hmin, then extruded to @p hmax.
+/// projected onto the xy-plane at @p hmin, then extruded to @p hmax.
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
 void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
@@ -429,8 +429,8 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 				if ((int)s.z >= minz && (int)s.z <= maxz)
 				{
 					float p[3];
-					p[0] = chf.bmin[0] + (x+0.5f)*chf.cs; 
-					p[1] = chf.bmin[1] + (y + 0.5f)*chf.cs;
+					p[0] = chf.bmin[0] + (x+0.5f)*chf.cs;
+					p[1] = chf.bmin[1] + (y+0.5f)*chf.cs;
 					p[2] = 0; 
 
 					if (pointInPoly(nverts, verts, p))
@@ -558,7 +558,7 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 	if (minx < 0) minx = 0;
 	if (maxx >= chf.width) maxx = chf.width-1;
 	if (miny < 0) minz = 0;
-	if (maxy >= chf.height) maxy = chf.height-1;	
+	if (maxy >= chf.height) maxy = chf.height-1;
 	
 	
 	for (int y = miny; y <= maxy; ++y)

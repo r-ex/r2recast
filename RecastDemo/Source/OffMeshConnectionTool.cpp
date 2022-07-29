@@ -125,7 +125,6 @@ void OffMeshConnectionTool::handleClick(const float* /*s*/, const float* p, bool
 			m_hitPosSet = false;
 		}
 	}
-	
 }
 
 void OffMeshConnectionTool::handleToggle()
@@ -146,7 +145,7 @@ void OffMeshConnectionTool::handleRender()
 	const float s = m_sample->getAgentRadius();
 	
 	if (m_hitPosSet)
-		duDebugDrawCross(&dd, m_hitPos[0],m_hitPos[1]+0.1f,m_hitPos[2], s, duRGBA(0,0,0,128), 2.0f);
+		duDebugDrawCross(&dd, m_hitPos[0],m_hitPos[1],m_hitPos[2]+0.1f, s, duRGBA(0,0,0,128), 2.0f);
 
 	InputGeom* geom = m_sample->getInputGeom();
 	if (geom)

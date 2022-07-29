@@ -524,7 +524,6 @@ void dtNavMesh::connectExtOffMeshLinks(dtMeshTile* tile, dtMeshTile* target, int
 			}
 		}
 	}
-
 }
 
 void dtNavMesh::connectIntLinks(dtMeshTile* tile)
@@ -561,7 +560,7 @@ void dtNavMesh::connectIntLinks(dtMeshTile* tile)
 				poly->firstLink = idx;
 				link->flags = 0xffff00ff;
 			}
-		}			
+		}
 	}
 }
 

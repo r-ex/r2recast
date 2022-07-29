@@ -81,7 +81,7 @@ static bool circumCircle(const float* p1, const float* p2, const float* p3,
 		const float v2Sq = vdot2(v2,v2);
 		const float v3Sq = vdot2(v3,v3);
 		c[0] = (v1Sq*(v2[1]-v3[1]) + v2Sq*(v3[1]-v1[1]) + v3Sq*(v1[1]-v2[1])) / (2*cp);
-		c[1] = (v1Sq*(v3[0] - v2[0]) + v2Sq * (v1[0] - v3[0]) + v3Sq * (v2[0] - v1[0])) / (2 * cp);
+		c[1] = (v1Sq*(v3[0]-v2[0]) + v2Sq*(v1[0]-v3[0]) + v3Sq*(v2[0]-v1[0])) / (2*cp);
 		c[2] = 0;
 		r = vdist2(c, v1);
 		rcVadd(c, c, p1);
@@ -1407,7 +1407,7 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		for (int j = 0; j < nverts; ++j)
 		{
 			verts[j*3+0] += orig[0];
-			verts[j * 3 + 1] += orig[1];
+			verts[j*3+1] += orig[1];
 			verts[j*3+2] += orig[2] + chf.ch; // Is this offset necessary?
 		}
 		// Offset poly too, will be used to flag checking.

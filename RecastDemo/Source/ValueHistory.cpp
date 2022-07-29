@@ -112,4 +112,3 @@ void drawGraph(const GraphParams* p, const ValueHistory* graph,
 	imguiDrawText(ix+size+5, iy+3, IMGUI_ALIGN_LEFT, label, imguiRGBA(255,255,255,192));
 	imguiDrawText(ix+size+150, iy+3, IMGUI_ALIGN_RIGHT, text, imguiRGBA(255,255,255,128));
 }
-

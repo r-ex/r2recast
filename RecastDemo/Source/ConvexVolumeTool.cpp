@@ -56,7 +56,7 @@ inline bool cmppt(const float* a, const float* b)
 	if (a[1] > b[1]) return false;
 	return false;
 }
-// Calculates convex hull on xz-plane of points on 'pts',
+// Calculates convex hull on xy-plane of points on 'pts',
 // stores the indices of the resulting hull in 'out' and
 // returns number of points on hull.
 static int convexhull(const float* pts, int npts, int* out)
@@ -74,7 +74,7 @@ static int convexhull(const float* pts, int npts, int* out)
 		out[i++] = hull;
 		endpt = 0;
 		for (int j = 1; j < npts; ++j)
-			if (hull == endpt || left(&pts[hull*3], &pts[j*3], &pts[endpt*3]))
+			if (hull == endpt || left(&pts[hull*3], &pts[endpt*3], &pts[j*3]))
 				endpt = j;
 		hull = endpt;
 	}
@@ -100,7 +100,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 
 ConvexVolumeTool::ConvexVolumeTool() :
 	m_sample(0),
-	m_areaType(SAMPLE_POLYAREA_GRASS),
+	m_areaType(SAMPLE_POLYAREA_GROUND),
 	m_polyOffset(0.0f),
 	m_boxHeight(500.0f),
 	m_boxDescent(250.0f),
@@ -124,7 +124,7 @@ void ConvexVolumeTool::handleMenu()
 {
 	imguiSlider("Shape Height", &m_boxHeight, 0.1f, 2000.0f, 0.1f);
 	imguiSlider("Shape Descent", &m_boxDescent, 0.1f, 2000.0f, 0.1f);
-	imguiSlider("Poly Offset", &m_polyOffset, 0.0f, 100.0f, 0.1f);
+	imguiSlider("Poly Offset", &m_polyOffset, 0.0f, 1000.0f, 0.1f);
 
 	imguiSeparator();
 
@@ -270,12 +270,12 @@ void ConvexVolumeTool::handleRender()
 	{
 		const float* vi = &m_pts[m_hull[j]*3];
 		const float* vj = &m_pts[m_hull[i]*3];
-		dd.vertex(vj[0],vj[1], minh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vi[0], vi[1], minh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vj[0], vj[1], maxh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vi[0], vi[1], maxh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vj[0], vj[1], minh, duRGBA(255, 255, 255, 64));
-		dd.vertex(vj[0], vj[1], maxh, duRGBA(255,255,255,64));
+		dd.vertex(vj[0],vj[1],minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vi[0],vi[1],minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0],vj[1],maxh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vi[0],vi[1],maxh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0],vj[1],minh, duRGBA(255, 255, 255, 64));
+		dd.vertex(vj[0],vj[1],maxh, duRGBA(255,255,255,64));
 	}
 	dd.end();	
 }

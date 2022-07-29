@@ -308,7 +308,6 @@ void NavMeshPruneTool::handleRender()
 			}
 		}
 	}
-
 }
 
 void NavMeshPruneTool::handleRenderOverlay(double* proj, double* model, int* view)

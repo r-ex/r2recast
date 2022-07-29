@@ -715,7 +715,7 @@ int not_main(int argc, char** argv)
 		// Compute the projection matrix.
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		gluPerspective(50.0f, (float)width/(float)height, 1.0f, camr);
+		gluPerspective(75.0f, (float)width/(float)height, 1.0f, camr);
 		GLdouble projectionMatrix[16];
 		glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
 		
@@ -724,7 +724,7 @@ int not_main(int argc, char** argv)
 		glLoadIdentity();
 		glRotatef(cameraEulers[0], 1, 0, 0);
 		glRotatef(cameraEulers[1], 0, 1, 0);
-		float mXZY_to_XYZ[16] =
+		const float mXZY_to_XYZ[16] =
 		{
 			1,0,0,0,
 			0,0,-1,0, //tbh not sure why this is needed, the tri flips again? something is very stupid...
@@ -1220,5 +1220,5 @@ int not_main(int argc, char** argv)
 	delete sample;
 	delete geom;
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
