@@ -174,8 +174,8 @@ struct dtPoly
 	/// @note Use the structure's set and get methods to acess this value.
 	unsigned char areaAndtype;
 
-	unsigned short link_table_idx;						//IDK but looks filled
-	unsigned short unk;						//IDK but looks filled
+	unsigned short disjointSetId;
+	unsigned short unk;				//IDK but looks filled
 	float org[3];					//NO IDEA
 
 	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
@@ -345,9 +345,9 @@ struct dtNavMeshParams
 	int maxPolys;					///< The maximum number of polygons each tile can contain. This and maxTiles are used to calculate how many bits are needed to identify tiles and polygons uniquely.
 //	
 //// i hate this
-	int disjoint_poly_group_count = 0;
-	int reachability_table_size = 0;
-	int reachability_table_count = 0;
+	int disjointPolyGroupCount = 0;
+	int reachabilityTableSize = 0;
+	int reachabilityTableCount = 0;
 
 };
 

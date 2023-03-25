@@ -130,8 +130,8 @@ protected:
 	float m_detailSampleDist;
 	float m_detailSampleMaxError;
 	int m_partitionType;
-	int m_count_reachability_tables;
-	const char* m_navmesh_name="unk";
+	int m_reachabilityTableCount;
+	const char* m_navmeshName = "unnamed";
 
 	bool m_filterLowHangingObstacles;
 	bool m_filterLedgeSpans;

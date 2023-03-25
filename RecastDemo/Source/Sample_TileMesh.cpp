@@ -779,8 +779,8 @@ void Sample_TileMesh::build_n_SaveAllHulls()
 		m_agentMaxClimb = h.climb_height;
 		m_agentHeight = h.height;
 		if (is_human)
-			m_count_reachability_tables = 4;
-		m_navmesh_name = h.name;
+			m_reachabilityTableCount = 4;
+		m_navmeshName = h.name;
 		is_human = false;
 		
 		handleSettings();

@@ -185,7 +185,7 @@ void Sample::resetCommonSettings()
 	m_detailSampleDist = 6.0f;
 	m_detailSampleMaxError = 1.0f;
 	m_partitionType = SAMPLE_PARTITION_WATERSHED;
-	m_count_reachability_tables = 1;
+	m_reachabilityTableCount = 1;
 }
 hulldef hulls[4] = {
 	{"small",8,72*0.5,18,512.0f},
@@ -204,8 +204,8 @@ void Sample::handleCommonSettings()
 			m_agentMaxClimb = h.climb_height;
 			m_agentHeight = h.height;
 			if (is_human)
-				m_count_reachability_tables = 4;
-			m_navmesh_name = h.name;
+				m_reachabilityTableCount = 4;
+			m_navmeshName = h.name;
 		}
 		is_human = false;
 	}
@@ -442,7 +442,7 @@ dtNavMesh* Sample::loadAll(const char* path)
 {
 
 	char buffer[256];
-	sprintf(buffer, "%s_%s.nm", path, m_navmesh_name);
+	sprintf(buffer, "%s_%s.nm", path, m_navmeshName);
 
 	FILE* fp = fopen(buffer, "rb");
 	if (!fp) return 0;
@@ -514,10 +514,10 @@ dtNavMesh* Sample::loadAll(const char* path)
 
 	return mesh;
 }
-struct link_table_data
+struct LinkTableData
 {
 	//disjoint set algo from some crappy site because i'm too lazy to think
-	int set_count = 0;
+	int setCount = 0;
 	std::vector<int> rank;
 	std::vector<int> parent;
 	void init(int size)
@@ -531,8 +531,8 @@ struct link_table_data
 	int insert_new()
 	{
 		rank.push_back(0);
-		parent.push_back(set_count);
-		return set_count++;
+		parent.push_back(setCount);
+		return setCount++;
 	}
 	int find(int id)
 	{
@@ -558,7 +558,7 @@ struct link_table_data
 		}
 	}
 };
-void build_link_table(dtNavMesh* mesh, link_table_data& data)
+void buildLinkTable(dtNavMesh* mesh, LinkTableData& data)
 {
 	//clear all labels
 	for (int i = 0; i < mesh->getMaxTiles(); ++i)
@@ -569,7 +569,7 @@ void build_link_table(dtNavMesh* mesh, link_table_data& data)
 		for (int j = 0; j < pcount; j++)
 		{
 			auto& poly = tile->polys[j];
-			poly.link_table_idx = -1;
+			poly.disjointSetId = -1;
 		}
 	}
 	//first pass
@@ -590,18 +590,18 @@ void build_link_table(dtNavMesh* mesh, link_table_data& data)
 				const dtPoly *p;
 				mesh->getTileAndPolyByRefUnsafe(l.ref, &t, &p);
 
-				if(p->link_table_idx != (unsigned short)-1)
-					nlabels.insert(p->link_table_idx);
+				if(p->disjointSetId != (unsigned short)-1)
+					nlabels.insert(p->disjointSetId);
 				plink = l.next;
 			}
 			if (nlabels.empty())
 			{
-				poly.link_table_idx = data.insert_new();
+				poly.disjointSetId = data.insert_new();
 			}
 			else
 			{
 				auto l = *nlabels.begin();
-				poly.link_table_idx = l;
+				poly.disjointSetId = l;
 				for (auto nl : nlabels)
 					data.set_union(l, nl);
 			}
@@ -617,26 +617,26 @@ void build_link_table(dtNavMesh* mesh, link_table_data& data)
 		for (int j = 0; j < pcount; j++)
 		{
 			auto& poly = tile->polys[j];
-			auto id = data.find(poly.link_table_idx);
-			poly.link_table_idx = id;
+			auto id = data.find(poly.disjointSetId);
+			poly.disjointSetId = id;
 		}
 	}
 }
-void set_reachable(std::vector<int>& data,int count, int id1, int id2, bool value)
+void setReachable(std::vector<int>& data,int count, int id1, int id2, bool value)
 {
 	int w = ((count + 31) / 32);
 	auto& cell = data[id1*w + id2 / 32];
-	uint32_t value_mask = ~(1<<(id2 & 0x1f));
+	uint32_t valueMask = ~(1<<(id2 & 0x1f));
 	if (!value)
-		cell = (cell & value_mask);
+		cell = (cell & valueMask);
 	else
-		cell = (cell & value_mask) | (1 << (id2 & 0x1f));
+		cell = (cell & valueMask) | (1 << (id2 & 0x1f));
 }
 void Sample::saveAll(const char* path,dtNavMesh* mesh)
 {
 	if (!mesh) return;
 	char buffer[256];
-	sprintf(buffer, "%s_%s.nm", path, m_navmesh_name);
+	sprintf(buffer, "%s_%s.nm", path, m_navmeshName);
 
 	FILE* fp = fopen(buffer, "wb");
 	if (!fp)
@@ -656,12 +656,12 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	}
 	memcpy(&header.params, mesh->getParams(), sizeof(dtNavMeshParams));
 
-	link_table_data link_data;
-	build_link_table(mesh, link_data);
-	int table_size = ((link_data.set_count + 31) / 32)*link_data.set_count * 32;
-	header.params.disjoint_poly_group_count = link_data.set_count;
-	header.params.reachability_table_count = m_count_reachability_tables;
-	header.params.reachability_table_size = table_size;
+	LinkTableData linkData;
+	buildLinkTable(mesh, linkData);
+	int tableSize = ((linkData.setCount + 31) / 32)*linkData.setCount * 32;
+	header.params.disjointPolyGroupCount = linkData.setCount;
+	header.params.reachabilityTableCount = m_reachabilityTableCount;
+	header.params.reachabilityTableSize = tableSize;
 
 	if (*is_tf2)unpatch_headertf2(header);
 	fwrite(&header, sizeof(NavMeshSetHeader), 1, fp);
@@ -683,14 +683,14 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	}
 	
 	//still dont know what this thing is...
-	int header_sth=0;
-	for(int i=0;i<link_data.set_count;i++)
-		fwrite(&header_sth, sizeof(int), 1, fp);
+	int header_unk=0;
+	for(int i=0;i<linkData.setCount;i++)
+		fwrite(&header_unk, sizeof(int), 1, fp);
 
-	std::vector<int> reachability(table_size,0);
-	for (int i = 0; i < link_data.set_count; i++)
-		set_reachable(reachability, link_data.set_count, i, i, true);
-	for(int i=0;i< header.params.reachability_table_count;i++)
-		fwrite(reachability.data(), sizeof(int), (table_size /4), fp);
+	std::vector<int> reachability(tableSize,0);
+	for (int i = 0; i < linkData.setCount; i++)
+		setReachable(reachability, linkData.setCount, i, i, true);
+	for(int i=0;i< header.params.reachabilityTableCount;i++)
+		fwrite(reachability.data(), sizeof(int), (tableSize /4), fp);
 	fclose(fp);
 }
