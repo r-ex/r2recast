@@ -123,9 +123,9 @@ public:
 	///@{
 	int getOffMeshConnectionCount() const { return m_offMeshConCount; }
 	const float* getOffMeshConnectionVerts() const { return m_offMeshConVerts; }
+	const float* getOffMeshConnectionRefPos() const { return m_offMeshConResPos; }
 	const float* getOffMeshConnectionRads() const { return m_offMeshConRads; }
 	const float* getOffMeshConnectionYaws() const { return m_offMeshConYaws; }
-	const float* getOffMeshConnectionTraverseDirs() const { return m_offMeshConResPos; }
 	const unsigned char* getOffMeshConnectionDirs() const { return m_offMeshConDirs; }
 	const unsigned char* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
 	const unsigned short* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
