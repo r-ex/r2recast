@@ -90,6 +90,9 @@ static const unsigned int DT_NULL_LINK = 0xffffffff;
 /// A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
 static const unsigned int DT_OFFMESH_CON_BIDIR = 1;
 
+/// A value that determines the offset between the start pos and the ref pos in an off-mesh connection.
+static const float DT_OFFMESH_CON_REFPOS_OFFSET = 35.f;
+
 /// The maximum number of user defined area ids.
 /// @ingroup detour
 static const int DT_MAX_AREAS = 32; // <-- confirmed 32 see [r5apex_ds.exe + 0xf47dda] '-> test    [rcx+80h], ax'.
@@ -248,9 +251,21 @@ struct dtOffMeshConnection
 	/// The id of the offmesh connection. (User assigned when the navigation mesh is built.)
 	unsigned int userId;
 
-	float unk[3];
-	float another_unk;
+	float refPos[3];
+	float yawAngle;
 };
+
+/// Calculates the yaw angle in an off-mesh connection.
+/// @param	spos[in]		The start position of the off mesh connection.
+/// @param	epos[in]		The end position of the off mesh connection.
+///								returns the yaw angle on the XY plane.
+extern float dtCalcOffMeshYawAngle(const float* spos, const float* epos);
+/// Calculates the ref position in an off-mesh connection.
+/// @param	spos[in]		The start position of the off mesh connection.
+/// @param	yaw[in]			The yaw angle of the off-mesh connection.
+/// @param	offset[in]		The desired offset from the start position.
+/// @param	res[in]			The output ref position.
+extern void dtCalcOffMeshRefPos(const float* spos, float yaw, float offset, float* res);
 
 /// Provides high level information related to a dtMeshTile object.
 /// @ingroup detour
@@ -325,7 +340,7 @@ private:
 
 /// Get flags for edge in detail triangle.
 /// @param	triFlags[in]		The flags for the triangle (last component of detail vertices above).
-/// @param	edgeIndex[in]		The index of the first vertex of the edge. For instance, if 0,
+/// @param	edgeIndex[in]		The index of the first vertex of the edge. For instance, if 0.
 ///								returns flags for edge AB.
 inline int dtGetDetailTriEdgeFlags(unsigned char triFlags, int edgeIndex)
 {

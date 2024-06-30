@@ -347,7 +347,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 					offMeshConClass[i*2+0] = 0;
 			}
 
-			// Cound how many links should be allocated for off-mesh connections.
+			// Count how many links should be allocated for off-mesh connections.
 			if (offMeshConClass[i*2+0] == 0xff)
 				offMeshConLinkCount++;
 			if (offMeshConClass[i*2+1] == 0xff)
@@ -358,7 +358,7 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 		}
 	}
 	
-	// Off-mesh connectionss are stored as polygons, adjust values.
+	// Off-mesh connections are stored as polygons, adjust values.
 	const int totPolyCount = params->polyCount + storedOffMeshConCount;
 	const int totVertCount = params->vertCount + storedOffMeshConCount*2;
 	
@@ -660,9 +660,12 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			con->poly = (unsigned short)(offMeshPolyBase + n);
 			// Copy connection end-points.
 			const float* endPts = &params->offMeshConVerts[i*2*3];
+			const float* traverseDirs = &params->offMeshRefPos[i*3];
 			dtVcopy(&con->pos[0], &endPts[0]);
 			dtVcopy(&con->pos[3], &endPts[3]);
+			dtVcopy(&con->refPos[0], &traverseDirs[0]);
 			con->rad = params->offMeshConRad[i];
+			con->yawAngle = params->offMeshConYaw[i];
 			con->flags = params->offMeshConDir[i] ? DT_OFFMESH_CON_BIDIR : 0;
 			con->side = offMeshConClass[i*2+1];
 			if (params->offMeshConUserID)

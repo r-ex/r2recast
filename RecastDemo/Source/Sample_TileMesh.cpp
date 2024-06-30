@@ -1180,6 +1180,8 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.detailTriCount = m_dmesh->ntris;
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
+		params.offMeshConYaw = m_geom->getOffMeshConnectionYaws();
+		params.offMeshRefPos = m_geom->getOffMeshConnectionTraverseDirs();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
 		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
 		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();

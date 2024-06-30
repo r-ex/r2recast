@@ -30,6 +30,7 @@
 #include "DebugDraw.h"
 #include "RecastDebugDraw.h"
 #include "DetourNavMesh.h"
+#include "DetourMath.h"
 #include "Sample.h"
 
 static bool intersectSegmentTriangle(const float* sp, const float* sq,
@@ -207,6 +208,7 @@ bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath, bool is
 
 	return true;
 }
+// TODO[ AMOS ]: store offmesh yaw and ref pos !!!
 bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_tf2)
 {
 	//NB(warmist): tf2 not implemented here
@@ -360,7 +362,7 @@ bool InputGeom::load(rcContext* ctx, const std::string& filepath,bool is_tf2)
 
 	return false;
 }
-
+// TODO[ AMOS ]: store offmesh yaw and ref pos !!!
 bool InputGeom::saveGeomSet(const BuildSettings* settings)
 {
 	if (!m_mesh) return false;
@@ -518,25 +520,35 @@ void InputGeom::addOffMeshConnection(const float* spos, const float* epos, const
 									 unsigned char bidir, unsigned char area, unsigned short flags)
 {
 	if (m_offMeshConCount >= MAX_OFFMESH_CONNECTIONS) return;
-	float* v = &m_offMeshConVerts[m_offMeshConCount*3*2];
+	float* refs = &m_offMeshConResPos[m_offMeshConCount*3];
+	float* verts = &m_offMeshConVerts[m_offMeshConCount*3*2];
+	float yaw = dtCalcOffMeshYawAngle(spos, epos);
+
+	dtCalcOffMeshRefPos(spos, yaw, DT_OFFMESH_CON_REFPOS_OFFSET, refs);
+
 	m_offMeshConRads[m_offMeshConCount] = rad;
+	m_offMeshConYaws[m_offMeshConCount] = yaw;
 	m_offMeshConDirs[m_offMeshConCount] = bidir;
 	m_offMeshConAreas[m_offMeshConCount] = area;
 	m_offMeshConFlags[m_offMeshConCount] = flags;
 	m_offMeshConId[m_offMeshConCount] = 1000 + m_offMeshConCount;
-	rcVcopy(&v[0], spos);
-	rcVcopy(&v[3], epos);
+	rcVcopy(&verts[0], spos);
+	rcVcopy(&verts[3], epos);
 	m_offMeshConCount++;
 }
 
 void InputGeom::deleteOffMeshConnection(int i)
 {
 	m_offMeshConCount--;
-	float* src = &m_offMeshConVerts[m_offMeshConCount*3*2];
-	float* dst = &m_offMeshConVerts[i*3*2];
-	rcVcopy(&dst[0], &src[0]);
-	rcVcopy(&dst[3], &src[3]);
+	float* vertsSrc = &m_offMeshConVerts[m_offMeshConCount*3*2];
+	float* vertsDst = &m_offMeshConVerts[i*3*2];
+	float* refSrc = &m_offMeshConResPos[m_offMeshConCount*3];
+	float* refDst = &m_offMeshConResPos[i*3];
+	rcVcopy(&vertsDst[0], &vertsSrc[0]);
+	rcVcopy(&vertsDst[3], &vertsSrc[3]);
+	rcVcopy(&refDst[0], &refSrc[0]);
 	m_offMeshConRads[i] = m_offMeshConRads[m_offMeshConCount];
+	m_offMeshConYaws[i] = m_offMeshConYaws[m_offMeshConCount];
 	m_offMeshConDirs[i] = m_offMeshConDirs[m_offMeshConCount];
 	m_offMeshConAreas[i] = m_offMeshConAreas[m_offMeshConCount];
 	m_offMeshConFlags[i] = m_offMeshConFlags[m_offMeshConCount];
@@ -567,6 +579,13 @@ void InputGeom::drawOffMeshConnections(duDebugDraw* dd, bool hilight)
 			duAppendArc(dd, v[0],v[1],v[2], v[3],v[4],v[5], 0.25f,
 						(m_offMeshConDirs[i]&DT_OFFMESH_CON_BIDIR) ? 30.0f : 0.0f, 30.0f, conColor);
 		}
+
+		float* r = &m_offMeshConResPos[i*3];
+
+		float refPosDir[3];
+		dtCalcOffMeshRefPos(r, m_offMeshConYaws[i], DT_OFFMESH_CON_REFPOS_OFFSET, refPosDir);
+
+		duAppendArrow(dd, r[0], r[1], r[2], refPosDir[0], refPosDir[1], refPosDir[2], 0.f, 10.f, duRGBA(255, 255, 0, 255));
 	}	
 	dd->end();
 

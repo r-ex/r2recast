@@ -411,7 +411,7 @@ void patch_tiletf2(dtMeshTile* t)
 	{
 		coord_tf_fix(t->offMeshCons[i].pos);
 		coord_tf_fix(t->offMeshCons[i].pos + 3);
-		coord_tf_fix(t->offMeshCons[i].unk);
+		coord_tf_fix(t->offMeshCons[i].refPos);
 	}
 }
 void unpatch_tiletf2(dtMeshTile* t)
@@ -435,7 +435,7 @@ void unpatch_tiletf2(dtMeshTile* t)
 	{
 		coord_tf_unfix(t->offMeshCons[i].pos);
 		coord_tf_unfix(t->offMeshCons[i].pos+3);
-		coord_tf_unfix(t->offMeshCons[i].unk);
+		coord_tf_unfix(t->offMeshCons[i].refPos);
 	}
 }
 dtNavMesh* Sample::loadAll(const char* path)
