@@ -28,6 +28,7 @@
 #include <algorithm>
 
 static const unsigned RC_UNSET_HEIGHT = 0xffff;
+#define REVERSE_DIRECTION 1
 
 struct rcHeightPatch
 {
@@ -292,7 +293,12 @@ static int findEdge(const int* edges, int nedges, int s, int t)
 	for (int i = 0; i < nedges; i++)
 	{
 		const int* e = &edges[i*4];
+
+#if REVERSE_DIRECTION
+		if ((e[1] == s && e[0] == t) || (e[1] == t && e[0] == s))
+#else
 		if ((e[0] == s && e[1] == t) || (e[0] == t && e[1] == s))
+#endif
 			return i;
 	}
 	return EV_UNDEF;
@@ -346,6 +352,8 @@ static int addEdgeFlipped(rcContext* ctx, int* edges, int& nedges, const int max
 		return EV_UNDEF;
 	}
 }
+
+#if REVERSE_DIRECTION
 static void updateRightFace(int* e, int s, int t, int f)
 {
 	if (e[1] == s && e[0] == t && e[2] == EV_UNDEF)
@@ -353,6 +361,7 @@ static void updateRightFace(int* e, int s, int t, int f)
 	else if (e[0] == s && e[1] == t && e[3] == EV_UNDEF)
 		e[3] = f;
 }
+#else
 static void updateLeftFace(int* e, int s, int t, int f)
 {
 	if (e[0] == s && e[1] == t && e[2] == EV_UNDEF)
@@ -360,6 +369,7 @@ static void updateLeftFace(int* e, int s, int t, int f)
 	else if (e[1] == s && e[0] == t && e[3] == EV_UNDEF)
 		e[3] = f;
 }
+#endif
 
 static int overlapSegSeg2d(const float* a, const float* b, const float* c, const float* d)
 {
@@ -379,8 +389,8 @@ static bool overlapEdges(const float* pts, const int* edges, int nedges, int s1,
 {
 	for (int i = 0; i < nedges; ++i)
 	{
-		const int s0 = edges[i*4+0];
-		const int t0 = edges[i*4+1];
+		const int t0 = edges[i*4+0];
+		const int s0 = edges[i*4+1];
 		// Same or connected edges do not overlap.
 		if (s0 == s1 || s0 == t1 || t0 == s1 || t0 == t1)
 			continue;
@@ -389,7 +399,7 @@ static bool overlapEdges(const float* pts, const int* edges, int nedges, int s1,
 	}
 	return false;
 }
-#define REVERSE_DIRECTION 1
+
 static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges, int& nedges, const int maxEdges, int& nfaces, int e)
 {
 	static const float EPS = 1e-5f;
@@ -1556,8 +1566,8 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 		for (int k = 0; k < dm->ntris; ++k)
 		{
 			mesh.tris[mesh.ntris*4+0] = dm->tris[k*4+0];
-			mesh.tris[mesh.ntris*4+1] = dm->tris[k*4+1];
-			mesh.tris[mesh.ntris*4+2] = dm->tris[k*4+2];
+			mesh.tris[mesh.ntris*4+1] = dm->tris[k*4+1]; // TODO: flip 1 with 2?
+			mesh.tris[mesh.ntris*4+2] = dm->tris[k*4+2]; // TODO: flip 2 with 1?
 			mesh.tris[mesh.ntris*4+3] = dm->tris[k*4+3];
 			mesh.ntris++;
 		}
@@ -1575,6 +1585,7 @@ static unsigned char flip_flags(unsigned char flags_in)
 }
 bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail,int poly_tris)
 {
+#if !REVERSE_DIRECTION
 	for (int i = 0; i < mdetail.ntris; i++)
 	{
 		auto tri_begin = mdetail.tris + i * 4;
@@ -1587,5 +1598,6 @@ bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail,int poly_tris)
 		std::swap(tri_begin[0], tri_begin[2]);
 		tri_begin[3]=flip_flags(tri_begin[3]);
 	}
+#endif // !REVERSE_DIRECTION
 	return true;
 }
