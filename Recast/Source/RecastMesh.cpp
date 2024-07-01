@@ -189,7 +189,7 @@ inline bool leftOn(const int* a, const int* b, const int* c)
 {
 	return area2(a, b, c) <= 0;
 }
-#define REVERSE_DIRECTION 0
+#define REVERSE_DIRECTION 1
 inline bool right(const int* a, const int* b, const int* c)
 {
 	return area2(a, b, c) > 0;
@@ -217,7 +217,7 @@ static bool intersectProp(const int* a, const int* b, const int* c, const int* d
 #if REVERSE_DIRECTION
 	return xorb(right(a,b,c), right(a,b,d)) && xorb(right(c,d,a), right(c,d,b));
 #else
-	return xorb(left(a, b, c), left(a, b, d)) && xorb(left(c, d, a), left(c, d, b));
+	return xorb(left(a,b,c), left(a,b,d)) && xorb(left(c,d,a), left(c,d,b));
 #endif
 }
 
@@ -507,7 +507,7 @@ inline bool uleft(const unsigned short* a, const unsigned short* b, const unsign
 inline bool uright(const unsigned short* a, const unsigned short* b, const unsigned short* c)
 {
 	return ((int)b[0] - (int)a[0]) * ((int)c[1] - (int)a[1]) -
-		((int)c[0] - (int)a[0]) * ((int)b[1] - (int)a[1]) > 0;
+		   ((int)c[0] - (int)a[0]) * ((int)b[1] - (int)a[1]) > 0;
 }
 static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 							 const unsigned short* verts, int& ea, int& eb,
@@ -680,13 +680,22 @@ static bool canRemoveVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned sho
 				bool exists = false;
 				for (int m = 0; m < nedges; ++m)
 				{
-					int* e = &edges[m*3];
+					int* e = &edges[m * 3];
+#if REVERSE_DIRECTION
+					if (e[2] == b)
+					{
+						// Exists, increment vertex share count.
+						e[1]++;
+						exists = true;
+					}
+#else
 					if (e[1] == b)
 					{
 						// Exists, increment vertex share count.
 						e[2]++;
 						exists = true;
 					}
+#endif
 				}
 				// Add new edge.
 				if (!exists)
@@ -1035,27 +1044,11 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 	
 	return true;
 }
-void copy_flip_poly_mesh(unsigned short* input,unsigned short *output,int max_idx)
-{
 
-	//find actual vertex count
-	int cidx = 0;
-	for (int i = 0; i < max_idx; i++)
-		if (input[i] != 0xffff)
-			cidx++;
-		else
-			break;
-
-	//copy it out
-	for (int i = 0; i < cidx; i++)
-	{
-		output[i] = input[cidx - i-1];
-	}
-}
 /// @par
 ///
 /// @note If the mesh data is to be used to construct a Detour navigation mesh, then the upper 
-/// limit must be retricted to <= #DT_VERTS_PER_POLYGON.
+/// limit must be restricted to <= #DT_VERTS_PER_POLYGON.
 ///
 /// @see rcAllocPolyMesh, rcContourSet, rcPolyMesh, rcConfig
 bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMesh& mesh)
@@ -1281,7 +1274,6 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 		{
 			unsigned short* p = &mesh.polys[mesh.npolys*nvp*2];
 			unsigned short* q = &polys[j*nvp];
-			//copy_flip_poly_mesh(q, p, nvp);
 			for (int k = 0; k < nvp; ++k)
 				p[k] = q[k];
 			mesh.regs[mesh.npolys] = cont.reg;
@@ -1344,14 +1336,25 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 				const unsigned short* va = &mesh.verts[p[j]*3];
 				const unsigned short* vb = &mesh.verts[p[nj]*3];
 
+#if REVERSE_DIRECTION
 				if ((int)va[0] == 0 && (int)vb[0] == 0)
-					p[nvp+j] = 0x8000 | 0;
+					p[nvp+j] = 0x8000 | 2;
 				else if ((int)va[1] == h && (int)vb[1] == h)
 					p[nvp+j] = 0x8000 | 1;
 				else if ((int)va[0] == w && (int)vb[0] == w)
-					p[nvp+j] = 0x8000 | 2;
+					p[nvp+j] = 0x8000 | 0;
 				else if ((int)va[1] == 0 && (int)vb[1] == 0)
 					p[nvp+j] = 0x8000 | 3;
+#else
+				if ((int)va[0] == 0 && (int)vb[0] == 0)
+					p[nvp + j] = 0x8000 | 0;
+				else if ((int)va[1] == h && (int)vb[1] == h)
+					p[nvp + j] = 0x8000 | 1;
+				else if ((int)va[0] == w && (int)vb[0] == w)
+					p[nvp + j] = 0x8000 | 2;
+				else if ((int)va[1] == 0 && (int)vb[1] == 0)
+					p[nvp + j] = 0x8000 | 3;
+#endif
 			}
 		}
 	}
@@ -1487,7 +1490,7 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 		for (int j = 0; j < pmesh->nverts; ++j)
 		{
 			unsigned short* v = &pmesh->verts[j*3];
-			vremap[j] = addVertex(v[0]+ox, v[1] + oy, v[2],
+			vremap[j] = addVertex(v[0]+ox, v[1]+oy, v[2],
 								  mesh.verts, firstVert, nextVert, mesh.nverts);
 		}
 		
@@ -1670,6 +1673,7 @@ void flip_neis_direction(rcPolyMesh& mesh,unsigned short* arr, int count)
 }
 bool rcFlipPolyMesh(rcPolyMesh& mesh)
 {
+#if !REVERSE_DIRECTION
 	for (int i = 0; i < mesh.npolys; i++)
 	{
 		int max_verts = mesh.nvp;
@@ -1693,7 +1697,8 @@ bool rcFlipPolyMesh(rcPolyMesh& mesh)
 		}
 		//*/
 		shift_left(poly_begin_neis, cur_count); //this is needed because the neis index edges not vertexes
-		flip_neis_direction(mesh,poly_begin_neis, cur_count);
+		flip_neis_direction(poly_begin_neis, cur_count);
 	}
+#endif // !REVERSE_DIRECTION
 	return true;
 }
