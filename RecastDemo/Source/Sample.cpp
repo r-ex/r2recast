@@ -400,7 +400,7 @@ void patch_tiletf2(dtMeshTile* t)
 	for (size_t i = 0; i < t->header->detailVertCount * 3; i += 3)
 		coord_tf_fix(t->detailVerts + i);
 	for (size_t i = 0; i < t->header->polyCount; i++)
-		coord_tf_fix(t->polys[i].org);
+		coord_tf_fix(t->polys[i].center);
 	//might be wrong because of coord change might break tree layout
 	for (size_t i = 0; i < t->header->bvNodeCount; i++)
 	{
@@ -424,7 +424,7 @@ void unpatch_tiletf2(dtMeshTile* t)
 	for (size_t i = 0; i < t->header->detailVertCount * 3; i += 3)
 		coord_tf_unfix(t->detailVerts + i);
 	for (size_t i = 0; i < t->header->polyCount; i++)
-		coord_tf_unfix(t->polys[i].org);
+		coord_tf_unfix(t->polys[i].center);
 	//might be wrong because of coord change might break tree layout
 	for (size_t i = 0; i < t->header->bvNodeCount; i++)
 	{

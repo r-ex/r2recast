@@ -565,10 +565,10 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 				// Normal connection
 				p->neis[j] = src[nvp+j]+1;
 			}
-			dtVadd(p->org, p->org, &navVerts[p->verts[j] * 3]);
+			dtVadd(p->center, p->center, &navVerts[p->verts[j] * 3]);
 			p->vertCount++;
 		}
-		dtVscale(p->org, p->org, 1 / (float)(p->vertCount));
+		dtVscale(p->center, p->center, 1 / (float)(p->vertCount));
 		src += nvp*2;
 	}
 	// Off-mesh connection vertices.

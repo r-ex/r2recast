@@ -174,12 +174,14 @@ struct dtPoly
 	unsigned char vertCount;
 
 	/// The bit packed area id and polygon type.
-	/// @note Use the structure's set and get methods to acess this value.
+	/// @note Use the structure's set and get methods to access this value.
 	unsigned char areaAndtype;
 
 	unsigned short disjointSetId;
 	unsigned short unk;				//IDK but looks filled
-	float org[3];					//NO IDEA
+
+	/// The center of the polygon; see abstracted script function 'Navmesh_RandomPositions'.
+	float center[3];
 
 	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
 	inline void setArea(unsigned char a) { areaAndtype = (areaAndtype & 0xc0) | (a & 0x3f); }
