@@ -81,13 +81,13 @@ class InputGeom
 	///@{
 	static const int MAX_OFFMESH_CONNECTIONS = 256;
 	float m_offMeshConVerts[MAX_OFFMESH_CONNECTIONS*3*2];
-	float m_offMeshConResPos[MAX_OFFMESH_CONNECTIONS*3];
 	float m_offMeshConRads[MAX_OFFMESH_CONNECTIONS];
-	float m_offMeshConYaws[MAX_OFFMESH_CONNECTIONS];
 	unsigned char m_offMeshConDirs[MAX_OFFMESH_CONNECTIONS];
 	unsigned char m_offMeshConAreas[MAX_OFFMESH_CONNECTIONS];
 	unsigned short m_offMeshConFlags[MAX_OFFMESH_CONNECTIONS];
 	unsigned int m_offMeshConId[MAX_OFFMESH_CONNECTIONS];
+	float m_offMeshConRefPos[MAX_OFFMESH_CONNECTIONS*3];
+	float m_offMeshConRefYaws[MAX_OFFMESH_CONNECTIONS];
 	int m_offMeshConCount;
 	///@}
 
@@ -98,15 +98,15 @@ class InputGeom
 	int m_volumeCount;
 	///@}
 	
-	bool loadMesh(class rcContext* ctx, const std::string& filepath,bool is_tf2);
-	bool loadPlyMesh(class rcContext* ctx, const std::string& filepath, bool is_tf2);
-	bool loadGeomSet(class rcContext* ctx, const std::string& filepath,bool is_tf2);
+	bool loadMesh(class rcContext* ctx, const std::string& filepath);
+	bool loadPlyMesh(class rcContext* ctx, const std::string& filepath);
+	bool loadGeomSet(class rcContext* ctx, const std::string& filepath);
 public:
 	InputGeom();
 	~InputGeom();
 	
 	
-	bool load(class rcContext* ctx, const std::string& filepath, bool is_tf2);
+	bool load(class rcContext* ctx, const std::string& filepath);
 	bool saveGeomSet(const BuildSettings* settings);
 	
 	/// Method to return static mesh data.
@@ -123,13 +123,13 @@ public:
 	///@{
 	int getOffMeshConnectionCount() const { return m_offMeshConCount; }
 	const float* getOffMeshConnectionVerts() const { return m_offMeshConVerts; }
-	const float* getOffMeshConnectionRefPos() const { return m_offMeshConResPos; }
 	const float* getOffMeshConnectionRads() const { return m_offMeshConRads; }
-	const float* getOffMeshConnectionYaws() const { return m_offMeshConYaws; }
 	const unsigned char* getOffMeshConnectionDirs() const { return m_offMeshConDirs; }
 	const unsigned char* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
 	const unsigned short* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
 	const unsigned int* getOffMeshConnectionId() const { return m_offMeshConId; }
+	const float* getOffMeshConnectionRefPos() const { return m_offMeshConRefPos; }
+	const float* getOffMeshConnectionRefYaws() const { return m_offMeshConRefYaws; }
 	void addOffMeshConnection(const float* spos, const float* epos, const float rad,
 							  unsigned char bidir, unsigned char area, unsigned short flags);
 	void deleteOffMeshConnection(int i);

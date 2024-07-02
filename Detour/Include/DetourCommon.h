@@ -319,7 +319,7 @@ inline float dtVdot2D(const float* u, const float* v)
 /// Derives the xy-plane 2D perp product of the two vectors. (uy*vx - ux*vy)
 ///  @param[in]		u		The LHV vector [(x, y, z)]
 ///  @param[in]		v		The RHV vector [(x, y, z)]
-/// @return The dot product on the xy-plane.
+/// @return The perp dot product on the xy-plane.
 ///
 /// The vectors are projected onto the xy-plane, so the z-values are ignored.
 inline float dtVperp2D(const float* u, const float* v)
@@ -405,6 +405,8 @@ bool dtIntersectSegSeg2D(const float* ap, const float* aq,
 						 const float* bp, const float* bq,
 						 float& s, float& t);
 
+float distancePtLine2d(const float* pt, const float* p, const float* q);
+
 /// Determines if the specified point is inside the convex polygon on the xy-plane.
 ///  @param[in]		pt		The point to check. [(x, y, z)]
 ///  @param[in]		verts	The polygon vertices. [(x, y, z) * @p nverts]
@@ -434,7 +436,7 @@ bool dtOverlapPolyPoly2D(const float* polya, const int npolya,
 						 const float* polyb, const int npolyb);
 
 /// @}
-/// @name Miscellanious functions.
+/// @name Miscellaneous functions.
 /// @{
 
 inline unsigned int dtNextPow2(unsigned int v)

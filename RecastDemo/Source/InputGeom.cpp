@@ -53,7 +53,7 @@ static bool intersectSegmentTriangle(const float* sp, const float* sq,
 	if (d <= 0.0f) return false;
 	
 	// Compute intersection t value of pq with plane of triangle. A ray
-	// intersects iff 0 <= t. Segment intersects iff 0 <= t <= 1. Delay
+	// intersects if 0 <= t. Segment intersects if 0 <= t <= 1. Delay
 	// dividing by d until intersection has been found to pierce triangle
 	rcVsub(ap, sp, a);
 	t = rcVdot(ap, norm);
@@ -124,7 +124,7 @@ InputGeom::~InputGeom()
 	delete m_mesh;
 }
 		
-bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2)
+bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath)
 {
 	if (m_mesh)
 	{
@@ -137,8 +137,6 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2
 	m_volumeCount = 0;
 	
 	m_mesh = new rcMeshLoaderObj;
-	//m_mesh->m_flip_tris = is_tf2;
-	m_mesh->m_tf2_import_flip = is_tf2;
 	if (!m_mesh)
 	{
 		ctx->log(RC_LOG_ERROR, "loadMesh: Out of memory 'm_mesh'.");
@@ -166,7 +164,7 @@ bool InputGeom::loadMesh(rcContext* ctx, const std::string& filepath,bool is_tf2
 
 	return true;
 }
-bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath, bool is_tf2)
+bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath)
 {
 	if (m_mesh)
 	{
@@ -179,8 +177,6 @@ bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath, bool is
 	m_volumeCount = 0;
 
 	m_mesh = new rcMeshLoaderPly;
-	//m_mesh->m_flip_tris = is_tf2;
-	m_mesh->m_tf2_import_flip = is_tf2;
 	if (!m_mesh)
 	{
 		ctx->log(RC_LOG_ERROR, "loadMesh: Out of memory 'm_mesh'.");
@@ -208,8 +204,7 @@ bool InputGeom::loadPlyMesh(rcContext* ctx, const std::string& filepath, bool is
 
 	return true;
 }
-// TODO[ AMOS ]: store offmesh yaw and ref pos !!!
-bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_tf2)
+bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath)
 {
 	//NB(warmist): tf2 not implemented here
 	char* buf = 0;
@@ -271,7 +266,7 @@ bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_
 				name++;
 			if (*name)
 			{
-				if (!loadMesh(ctx, name, is_tf2))
+				if (!loadMesh(ctx, name))
 				{
 					delete [] buf;
 					return false;
@@ -283,15 +278,23 @@ bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_
 			// Off-mesh connection
 			if (m_offMeshConCount < MAX_OFFMESH_CONNECTIONS)
 			{
-				float* v = &m_offMeshConVerts[m_offMeshConCount*3*2];
-				int bidir, area = 0, flags = 0;
+				float* verts = &m_offMeshConVerts[m_offMeshConCount*3*2];
+				float* refs = &m_offMeshConRefPos[m_offMeshConCount*3];
 				float rad;
-				sscanf(row+1, "%f %f %f  %f %f %f %f %d %d %d",
-					   &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &rad, &bidir, &area, &flags);
+				float yaw;
+				int bidir, area = 0, flags = 0;
+				sscanf(row+1, "%f %f %f %f %f %f %f %d %d %d %f %f %f %f",
+					   &verts[0], &verts[1], &verts[2],
+					   &verts[3], &verts[4], &verts[5],
+					   &rad,
+					   &bidir, &area, &flags,
+					   &refs[0], &refs[1], &refs[2],
+					   &yaw);
 				m_offMeshConRads[m_offMeshConCount] = rad;
 				m_offMeshConDirs[m_offMeshConCount] = (unsigned char)bidir;
 				m_offMeshConAreas[m_offMeshConCount] = (unsigned char)area;
 				m_offMeshConFlags[m_offMeshConCount] = (unsigned short)flags;
+				m_offMeshConRefYaws[m_offMeshConCount] = yaw;
 				m_offMeshConCount++;
 			}
 		}
@@ -344,25 +347,26 @@ bool InputGeom::loadGeomSet(rcContext* ctx, const std::string& filepath,bool is_
 	return true;
 }
 
-bool InputGeom::load(rcContext* ctx, const std::string& filepath,bool is_tf2)
+bool InputGeom::load(rcContext* ctx, const std::string& filepath)
 {
 	size_t extensionPos = filepath.find_last_of('.');
 	if (extensionPos == std::string::npos)
 		return false;
 
 	std::string extension = filepath.substr(extensionPos);
-	std::transform(extension.begin(), extension.end(), extension.begin(), tolower);
+	std::transform(extension.begin(), extension.end(), extension.begin(),
+		[](unsigned char c) { return char(::tolower(c)); });
 
 	if (extension == ".gset")
-		return loadGeomSet(ctx, filepath, is_tf2);
+		return loadGeomSet(ctx, filepath);
 	if (extension == ".obj")
-		return loadMesh(ctx, filepath, is_tf2);
+		return loadMesh(ctx, filepath);
 	if (extension == ".ply")
-		return loadPlyMesh(ctx, filepath, is_tf2);
+		return loadPlyMesh(ctx, filepath);
 
 	return false;
 }
-// TODO[ AMOS ]: store offmesh yaw and ref pos !!!
+
 bool InputGeom::saveGeomSet(const BuildSettings* settings)
 {
 	if (!m_mesh) return false;
@@ -412,13 +416,20 @@ bool InputGeom::saveGeomSet(const BuildSettings* settings)
 	// Store off-mesh links.
 	for (int i = 0; i < m_offMeshConCount; ++i)
 	{
-		const float* v = &m_offMeshConVerts[i*3*2];
+		const float* verts = &m_offMeshConVerts[i*3*2];
+		const float* refs = &m_offMeshConRefPos[i*3];
 		const float rad = m_offMeshConRads[i];
+		const float yaw = m_offMeshConRefYaws[i];
 		const int bidir = m_offMeshConDirs[i];
 		const int area = m_offMeshConAreas[i];
 		const int flags = m_offMeshConFlags[i];
-		fprintf(fp, "c %f %f %f  %f %f %f  %f %d %d %d\n",
-				v[0], v[1], v[2], v[3], v[4], v[5], rad, bidir, area, flags);
+		fprintf(fp, "c %f %f %f %f %f %f %f %d %d %d %f %f %f %f\n",
+				verts[0], verts[1], verts[2],
+				verts[3], verts[4], verts[5],
+				rad,
+				bidir, area, flags,
+				refs[0], refs[1], refs[2],
+				yaw);
 	}
 
 	// Convex volumes
@@ -520,14 +531,14 @@ void InputGeom::addOffMeshConnection(const float* spos, const float* epos, const
 									 unsigned char bidir, unsigned char area, unsigned short flags)
 {
 	if (m_offMeshConCount >= MAX_OFFMESH_CONNECTIONS) return;
-	float* refs = &m_offMeshConResPos[m_offMeshConCount*3];
+	float* refs = &m_offMeshConRefPos[m_offMeshConCount*3];
 	float* verts = &m_offMeshConVerts[m_offMeshConCount*3*2];
-	float yaw = dtCalcOffMeshYawAngle(spos, epos);
+	float yaw = dtCalcOffMeshRefYaw(spos, epos);
 
 	dtCalcOffMeshRefPos(spos, yaw, DT_OFFMESH_CON_REFPOS_OFFSET, refs);
 
 	m_offMeshConRads[m_offMeshConCount] = rad;
-	m_offMeshConYaws[m_offMeshConCount] = yaw;
+	m_offMeshConRefYaws[m_offMeshConCount] = yaw;
 	m_offMeshConDirs[m_offMeshConCount] = bidir;
 	m_offMeshConAreas[m_offMeshConCount] = area;
 	m_offMeshConFlags[m_offMeshConCount] = flags;
@@ -542,13 +553,13 @@ void InputGeom::deleteOffMeshConnection(int i)
 	m_offMeshConCount--;
 	float* vertsSrc = &m_offMeshConVerts[m_offMeshConCount*3*2];
 	float* vertsDst = &m_offMeshConVerts[i*3*2];
-	float* refSrc = &m_offMeshConResPos[m_offMeshConCount*3];
-	float* refDst = &m_offMeshConResPos[i*3];
+	float* refSrc = &m_offMeshConRefPos[m_offMeshConCount*3];
+	float* refDst = &m_offMeshConRefPos[i*3];
 	rcVcopy(&vertsDst[0], &vertsSrc[0]);
 	rcVcopy(&vertsDst[3], &vertsSrc[3]);
 	rcVcopy(&refDst[0], &refSrc[0]);
 	m_offMeshConRads[i] = m_offMeshConRads[m_offMeshConCount];
-	m_offMeshConYaws[i] = m_offMeshConYaws[m_offMeshConCount];
+	m_offMeshConRefYaws[i] = m_offMeshConRefYaws[m_offMeshConCount];
 	m_offMeshConDirs[i] = m_offMeshConDirs[m_offMeshConCount];
 	m_offMeshConAreas[i] = m_offMeshConAreas[m_offMeshConCount];
 	m_offMeshConFlags[i] = m_offMeshConFlags[m_offMeshConCount];
@@ -580,12 +591,12 @@ void InputGeom::drawOffMeshConnections(duDebugDraw* dd, bool hilight)
 						(m_offMeshConDirs[i]&DT_OFFMESH_CON_BIDIR) ? 30.0f : 0.0f, 30.0f, conColor);
 		}
 
-		float* r = &m_offMeshConResPos[i*3];
-
+		float* r = &m_offMeshConRefPos[i*3];
 		float refPosDir[3];
-		dtCalcOffMeshRefPos(r, m_offMeshConYaws[i], DT_OFFMESH_CON_REFPOS_OFFSET, refPosDir);
 
-		duAppendArrow(dd, r[0], r[1], r[2], refPosDir[0], refPosDir[1], refPosDir[2], 0.f, 10.f, duRGBA(255, 255, 0, 255));
+		dtCalcOffMeshRefPos(r, m_offMeshConRefYaws[i], DT_OFFMESH_CON_REFPOS_OFFSET, refPosDir);
+
+		duAppendArrow(dd, r[0],r[1],r[2], refPosDir[0],refPosDir[1],refPosDir[2], 0.f, 10.f, duRGBA(255,255,0,255));
 	}	
 	dd->end();
 

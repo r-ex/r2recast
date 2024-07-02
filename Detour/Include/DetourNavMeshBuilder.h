@@ -61,10 +61,6 @@ struct dtNavMeshCreateParams
 	const float* offMeshConVerts;
 	/// Off-mesh connection radii. [Size: #offMeshConCount] [Unit: wu]
 	const float* offMeshConRad;
-	/// Off-mesh connection yaw. [Size: #offMeshConCount] [Unit: wu]
-	const float* offMeshConYaw;
-	/// Off-mesh connection reference positions. [Size: #offMeshConCount] [Unit: wu]
-	const float* offMeshRefPos;
 	/// User defined flags assigned to the off-mesh connections. [Size: #offMeshConCount]
 	const unsigned short* offMeshConFlags;
 	/// User defined area ids assigned to the off-mesh connections. [Size: #offMeshConCount]
@@ -73,9 +69,13 @@ struct dtNavMeshCreateParams
 	///
 	/// 0 = Travel only from endpoint A to endpoint B.<br/>
 	/// #DT_OFFMESH_CON_BIDIR = Bidirectional travel.
-	const unsigned char* offMeshConDir;	
+	const unsigned char* offMeshConDir;
 	/// The user defined ids of the off-mesh connection. [Size: #offMeshConCount]
 	const unsigned int* offMeshConUserID;
+	/// Off-mesh connection reference positions. [(x, y, z) * #offMeshConCount] [Unit: wu]
+	const float* offMeshConRefPos;
+	/// Off-mesh connection reference yaw. [Size: #offMeshConCount] [Unit: wu]
+	const float* offMeshConRefYaw;
 	/// The number of off-mesh connections. [Limit: >= 0]
 	int offMeshConCount;
 
@@ -86,7 +86,7 @@ struct dtNavMeshCreateParams
 
 	unsigned int userId;	///< The user defined id of the tile.
 	int tileX;				///< The tile's x-grid location within the multi-tile destination mesh. (Along the x-axis.)
-	int tileY;				///< The tile's y-grid location within the multi-tile desitation mesh. (Along the z-axis.)
+	int tileY;				///< The tile's y-grid location within the multi-tile destination mesh. (Along the z-axis.)
 	int tileLayer;			///< The tile's layer within the layered destination mesh. [Limit: >= 0] (Along the y-axis.)
 	float bmin[3];			///< The minimum bounds of the tile. [(x, y, z)] [Unit: wu]
 	float bmax[3];			///< The maximum bounds of the tile. [(x, y, z)] [Unit: wu]

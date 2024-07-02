@@ -85,7 +85,7 @@ void save_ply(std::vector<float>& pts,std::vector<int>& colors,rcIntArray& tris)
 	fprintf(f,
 R"(ply
 format ascii 1.0
-element vertex %d
+element vertex %zu
 property float x
 property float y
 property float z
@@ -102,7 +102,7 @@ end_header
 		auto c = colors[i / 3];
 		fprintf(f, "%g %g %g %d %d %d\n", pts[i], pts[i + 1], pts[i + 2], c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff);
 	}
-	for (size_t i = 0; i < tris.size(); i += 3)
+	for (int i = 0; i < (int)tris.size(); i += 3)
 	{
 		fprintf(f, "3 %d %d %d\n", tris[i], tris[i + 1], tris[i + 2]);
 	}
@@ -115,8 +115,8 @@ float area2(const float* a, const float* b, const float* c)
 }
 void convex_hull(std::vector<float>& pts, std::vector<int>& hull)
 {
-	int pt_count = pts.size() / 3;
-	int cur_pt = 0;
+	size_t pt_count = pts.size() / 3;
+	size_t cur_pt = 0;
 	float min_x = pts[0];
 	for(size_t i=0;i<pt_count;i++)
 		if (pts[i * 3] < min_x)
@@ -126,13 +126,13 @@ void convex_hull(std::vector<float>& pts, std::vector<int>& hull)
 		}
 
 	
-	int point_on_hull = cur_pt;
-	int endpoint = 0;
+	size_t point_on_hull = cur_pt;
+	size_t endpoint = 0;
 	do
 	{
-		hull.push_back(point_on_hull);
+		hull.push_back((int)point_on_hull);
 		endpoint = (point_on_hull + 1) % pt_count;
-		for (int i = 0; i < pt_count; i++)
+		for (size_t i = 0; i < pt_count; i++)
 		{
 			if (area2(&pts[point_on_hull*3], &pts[i*3], &pts[endpoint*3]) > 0) //reverse this comparison for flipped hull direction
 				endpoint = i;
@@ -154,12 +154,21 @@ void generate_points(float* pts, int count, float dx, float dy, float dz)
 	}
 }
 
-void do_auto_load(const char* path, BuildContext& ctx,Sample* sample,InputGeom*& geom, string& meshName,bool& tf2_transforms)
+void get_model_name(const std::string& nameIn, std::string& nameOut)
+{
+	const size_t charPos = nameIn.find_last_of(".");
+
+	nameOut = charPos == string::npos
+		? nameIn
+		: nameIn.substr(0, charPos);
+}
+
+void do_auto_load(const char* path, BuildContext& ctx,Sample* sample,InputGeom*& geom, string& meshName)
 {
 	string geom_path = std::string(path);
 	meshName = geom_path.substr(geom_path.rfind("\\") + 1);
 	geom = new InputGeom;
-	if (!geom->load(&ctx, geom_path, tf2_transforms))
+	if (!geom->load(&ctx, geom_path))
 	{
 		delete geom;
 		geom = 0;
@@ -175,7 +184,7 @@ void do_auto_load(const char* path, BuildContext& ctx,Sample* sample,InputGeom*&
 	if (sample && geom)
 	{
 		sample->handleMeshChanged(geom);
-		sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+		get_model_name(meshName, sample->m_modelName);
 	}
 }
 
@@ -425,7 +434,6 @@ int not_main(int argc, char** argv)
 	
 	InputGeom* geom = 0;
 	Sample* sample = 0;
-	bool tf2_transforms = false;
 
 	const string testCasesFolder = "TestCases";
 	TestCase* test = 0;
@@ -436,7 +444,6 @@ int not_main(int argc, char** argv)
 
 	sample = g_samples[1].create();
 	sampleName = g_samples[1].name;
-	sample->is_tf2 = &tf2_transforms;
 	sample->setContext(&ctx);
 	if (geom)
 	{
@@ -444,7 +451,7 @@ int not_main(int argc, char** argv)
 	}
 	if (auto_load)
 	{
-		do_auto_load(auto_load, ctx, sample, geom, meshName, tf2_transforms);
+		do_auto_load(auto_load, ctx, sample, geom, meshName);
 		if (geom || sample)
 		{
 			const float* bmin = 0;
@@ -458,7 +465,7 @@ int not_main(int argc, char** argv)
 		}
 		if (argc > 2)
 		{
-			auto ts = dynamic_cast<Sample_TileMesh*>(sample);
+			auto ts = reinterpret_cast<Sample_TileMesh*>(sample);
 			ts->build_n_SaveAllHulls();
 			return 0;
 		}
@@ -546,7 +553,7 @@ int not_main(int argc, char** argv)
 						}
 						else
 						{
-							scrollZoom += 1.0f;
+							scrollZoom += 120.0f;
 						}
 					}
 					else
@@ -557,7 +564,7 @@ int not_main(int argc, char** argv)
 						}
 						else
 						{
-							scrollZoom -= 1.0f;
+							scrollZoom -= 120.0f;
 						}
 					}
 					break;
@@ -774,7 +781,7 @@ int not_main(int argc, char** argv)
 		cameraPos[1] += movey * (float)modelviewMatrix[6];
 		cameraPos[2] += movey * (float)modelviewMatrix[10];
 
-		cameraPos[1] += (moveUp - moveDown) * keybSpeed * dt;
+		cameraPos[2] += (moveUp - moveDown) * keybSpeed * dt;
 
 		glEnable(GL_FOG);
 
@@ -949,7 +956,6 @@ int not_main(int argc, char** argv)
 					if (newSample)
 					{
 						sampleName = g_samples[i].name;
-						newSample->is_tf2 = &tf2_transforms;
 					}
 				}
 			}
@@ -1016,7 +1022,7 @@ int not_main(int argc, char** argv)
 		if (!geom_path.empty())
 		{
 			geom = new InputGeom;
-			if (!geom->load(&ctx, geom_path, tf2_transforms))
+			if (!geom->load(&ctx, geom_path))
 			{
 				delete geom;
 				geom = 0;
@@ -1035,7 +1041,7 @@ int not_main(int argc, char** argv)
 			if (sample && geom)
 			{
 				sample->handleMeshChanged(geom);
-				sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+				get_model_name(meshName, sample->m_modelName);
 			}
 
 			if (geom || sample)
@@ -1092,7 +1098,6 @@ int not_main(int argc, char** argv)
 							if (newSample)
 							{
 								sampleName = g_samples[i].name;
-								newSample->is_tf2 = &tf2_transforms;
 							}
 						}
 					}
@@ -1114,7 +1119,7 @@ int not_main(int argc, char** argv)
 					
 					delete geom;
 					geom = new InputGeom;
-					if (!geom || !geom->load(&ctx, path,tf2_transforms))
+					if (!geom || !geom->load(&ctx, path))
 					{
 						delete geom;
 						geom = 0;
@@ -1127,7 +1132,7 @@ int not_main(int argc, char** argv)
 					if (sample && geom)
 					{
 						sample->handleMeshChanged(geom);
-						sample->m_model_name = meshName.substr(0, meshName.size() - 4);
+						get_model_name(meshName, sample->m_modelName);
 					}
 
 					// This will ensure that tile & poly bits are updated in tiled sample.

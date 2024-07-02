@@ -69,7 +69,7 @@ public:
 	///  @param[in]		curRef		The reference id of the current polygon.
 	///  @param[in]		curTile		The tile containing the current polygon.
 	///  @param[in]		curPoly		The current polygon.
-	///  @param[in]		nextRef		The refernece id of the next polygon. [opt]
+	///  @param[in]		nextRef		The reference id of the next polygon. [opt]
 	///  @param[in]		nextTile	The tile containing the next polygon. [opt]
 	///  @param[in]		nextPoly	The next polygon. [opt]
 #ifdef DT_VIRTUAL_QUERYFILTER
@@ -178,7 +178,7 @@ public:
 	// /@{
 
 	/// Finds a path from the start polygon to the end polygon.
-	///  @param[in]		startRef	The refrence id of the start polygon.
+	///  @param[in]		startRef	The reference id of the start polygon.
 	///  @param[in]		endRef		The reference id of the end polygon.
 	///  @param[in]		startPos	A position within the start polygon. [(x, y, z)]
 	///  @param[in]		endPos		A position within the end polygon. [(x, y, z)]
@@ -217,31 +217,32 @@ public:
 	///	-# Call finalizeSlicedFindPath() to get the path.
 	///@{ 
 
-	/// Intializes a sliced path query.
-	///  @param[in]		startRef	The refrence id of the start polygon.
+	/// Initializes a sliced path query.
+	///  @param[in]		startRef	The reference id of the start polygon.
 	///  @param[in]		endRef		The reference id of the end polygon.
 	///  @param[in]		startPos	A position within the start polygon. [(x, y, z)]
 	///  @param[in]		endPos		A position within the end polygon. [(x, y, z)]
-	///  @param[in]		filter		The polygon filter to apply to the query.
 	///  @param[in]		options		query options (see: #dtFindPathOptions)
 	/// @returns The status flags for the query.
 	dtStatus initSlicedFindPath(dtPolyRef startRef, dtPolyRef endRef,
 								const float* startPos, const float* endPos,
-								const dtQueryFilter* filter, const unsigned int options = 0);
+								const unsigned int options = 0);
 
 	/// Updates an in-progress sliced path query.
 	///  @param[in]		maxIter		The maximum number of iterations to perform.
 	///  @param[out]	doneIters	The actual number of iterations completed. [opt]
+	///  @param[in]		filter		The polygon filter to apply to the query.
 	/// @returns The status flags for the query.
-	dtStatus updateSlicedFindPath(const int maxIter, int* doneIters);
+	dtStatus updateSlicedFindPath(const int maxIter, int* doneIters, const dtQueryFilter* filter);
 
 	/// Finalizes and returns the results of a sliced path query.
 	///  @param[out]	path		An ordered list of polygon references representing the path. (Start to end.) 
 	///  							[(polyRef) * @p pathCount]
 	///  @param[out]	pathCount	The number of polygons returned in the @p path array.
 	///  @param[in]		maxPath		The max number of polygons the path array can hold. [Limit: >= 1]
+	///  @param[in]		filter		The polygon filter to apply to the query.
 	/// @returns The status flags for the query.
-	dtStatus finalizeSlicedFindPath(dtPolyRef* path, int* pathCount, const int maxPath);
+	dtStatus finalizeSlicedFindPath(dtPolyRef* path, int* pathCount, const int maxPath, const dtQueryFilter* filter);
 	
 	/// Finalizes and returns the results of an incomplete sliced path query, returning the path to the furthest
 	/// polygon on the existing path that was visited during the search.
@@ -251,9 +252,11 @@ public:
 	///  								[(polyRef) * @p pathCount]
 	///  @param[out]	pathCount		The number of polygons returned in the @p path array.
 	///  @param[in]		maxPath			The max number of polygons the @p path array can hold. [Limit: >= 1]
+	///  @param[in]		filter		The polygon filter to apply to the query.
 	/// @returns The status flags for the query.
 	dtStatus finalizeSlicedFindPathPartial(const dtPolyRef* existing, const int existingSize,
-										   dtPolyRef* path, int* pathCount, const int maxPath);
+										   dtPolyRef* path, int* pathCount, const int maxPath,
+										   const dtQueryFilter* filter);
 
 	///@}
 	/// @name Dijkstra Search Functions
@@ -276,7 +279,7 @@ public:
 								   dtPolyRef* resultRef, dtPolyRef* resultParent, float* resultCost,
 								   int* resultCount, const int maxResult) const;
 	
-	/// Finds the polygons along the naviation graph that touch the specified convex polygon.
+	/// Finds the polygons along the navigation graph that touch the specified convex polygon.
 	///  @param[in]		startRef		The reference id of the polygon where the search starts.
 	///  @param[in]		verts			The vertices describing the convex polygon. (CCW) 
 	///  								[(x, y, z) * @p nverts]
@@ -483,7 +486,7 @@ public:
 	dtStatus closestPointOnPoly(dtPolyRef ref, const float* pos, float* closest, bool* posOverPoly) const;
 	
 	/// Returns a point on the boundary closest to the source point if the source point is outside the 
-	/// polygon's xz-bounds.
+	/// polygon's xy-bounds.
 	///  @param[in]		ref			The reference id to the polygon.
 	///  @param[in]		pos			The position to check. [(x, y, z)]
 	///  @param[out]	closest		The closest point. [(x, y, z)]
@@ -492,7 +495,7 @@ public:
 	
 	/// Gets the height of the polygon at the provided position using the height detail. (Most accurate.)
 	///  @param[in]		ref			The reference id of the polygon.
-	///  @param[in]		pos			A position within the xz-bounds of the polygon. [(x, y, z)]
+	///  @param[in]		pos			A position within the xy-bounds of the polygon. [(x, y, z)]
 	///  @param[out]	height		The height at the surface of the polygon.
 	/// @returns The status flags for the query.
 	dtStatus getPolyHeight(dtPolyRef ref, const float* pos, float* height) const;
@@ -565,12 +568,12 @@ private:
 		float lastBestNodeCost;
 		dtPolyRef startRef, endRef;
 		float startPos[3], endPos[3];
-		const dtQueryFilter* filter;
 		unsigned int options;
 		float raycastLimitSqr;
 	};
-	dtQueryData m_query;				///< Sliced query state.
 
+	dtQueryData m_query;				///< Sliced query state.
+	
 	class dtNodePool* m_tinyNodePool;	///< Pointer to small node pool.
 	class dtNodePool* m_nodePool;		///< Pointer to node pool.
 	class dtNodeQueue* m_openList;		///< Pointer to open list queue.

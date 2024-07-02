@@ -102,7 +102,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 }
 
 static void walkContour(int x, int y, int i,
-						rcCompactHeightfield& chf,
+						const rcCompactHeightfield& chf,
 						unsigned char* flags, rcIntArray& points)
 {
 	// Choose the first non-connected edge
@@ -125,7 +125,7 @@ static void walkContour(int x, int y, int i,
 			bool isAreaBorder = false;
 			int px = x;
 			int py = y;
-			int pz = getCornerHeight(x, y, i, dir, chf, isBorderVertex); 
+			int pz = getCornerHeight(x, y, i, dir, chf, isBorderVertex);
 			switch(dir)
 			{
 				case 0: py++; break;
@@ -184,16 +184,16 @@ static void walkContour(int x, int y, int i,
 	}
 }
 
-static float distancePtSeg(const int x, const int z,
-						   const int px, const int pz,
+static float distancePtSeg(const int x, const int y,
+						   const int px, const int py,
 						   const int qx, const int qz)
 {
 	float pqx = (float)(qx - px);
-	float pqz = (float)(qz - pz);
+	float pqz = (float)(qz - py);
 	float dx = (float)(x - px);
-	float dz = (float)(z - pz);
+	float dy = (float)(y - py);
 	float d = pqx*pqx + pqz*pqz;
-	float t = pqx*dx + pqz*dz;
+	float t = pqx*dx + pqz*dy;
 	if (d > 0)
 		t /= d;
 	if (t < 0)
@@ -202,9 +202,9 @@ static float distancePtSeg(const int x, const int z,
 		t = 1;
 	
 	dx = px + t*pqx - x;
-	dz = pz + t*pqz - z;
+	dy = py + t*pqz - y;
 	
-	return dx*dx + dz*dz;
+	return dx*dx + dy*dy;
 }
 
 static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
@@ -473,7 +473,7 @@ inline int area2(const int* a, const int* b, const int* c)
 	return (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
 }
 
-//	Exclusive or: true iff exactly one argument is true.
+//	Exclusive or: true if exactly one argument is true.
 //	The arguments are negated to ensure that they are 0/1
 //	values.  Then the bitwise Xor operator may apply.
 //	(This idea is due to Michael Baldwin.)
@@ -482,7 +482,7 @@ inline bool xorb(bool x, bool y)
 	return !x ^ !y;
 }
 
-// Returns true iff c is strictly to the left of the directed
+// Returns true if c is strictly to the left of the directed
 // line through a to b.
 inline bool left(const int* a, const int* b, const int* c)
 {
@@ -499,7 +499,7 @@ inline bool collinear(const int* a, const int* b, const int* c)
 	return area2(a, b, c) == 0;
 }
 
-//	Returns true iff ab properly intersects cd: they share
+//	Returns true if ab properly intersects cd: they share
 //	a point interior to both segments.  The properness of the
 //	intersection is ensured by using strict leftness.
 static bool intersectProp(const int* a, const int* b, const int* c, const int* d)
@@ -512,8 +512,8 @@ static bool intersectProp(const int* a, const int* b, const int* c, const int* d
 	return xorb(left(a,b,c), left(a,b,d)) && xorb(left(c,d,a), left(c,d,b));
 }
 
-// Returns T iff (a,b,c) are collinear and point c lies
-// on the closed segement ab.
+// Returns T if (a,b,c) are collinear and point c lies
+// on the closed segment ab.
 static bool between(const int* a, const int* b, const int* c)
 {
 	if (!collinear(a, b, c))
@@ -525,7 +525,7 @@ static bool between(const int* a, const int* b, const int* c)
 		return	((a[1] <= c[1]) && (c[1] <= b[1])) || ((a[1] >= c[1]) && (c[1] >= b[1]));
 }
 
-// Returns true iff segments ab and cd intersect, properly or improperly.
+// Returns true if segments ab and cd intersect, properly or improperly.
 static bool intersect(const int* a, const int* b, const int* c, const int* d)
 {
 	if (intersectProp(a, b, c, d))
@@ -542,7 +542,7 @@ static bool vequal(const int* a, const int* b)
 	return a[0] == b[0] && a[1] == b[1];
 }
 
-static bool intersectSegCountour(const int* d0, const int* d1, int i, int n, const int* verts)
+static bool intersectSegContour(const int* d0, const int* d1, int i, int n, const int* verts)
 {
 	// For each edge (k,k+1) of P
 	for (int k = 0; k < n; k++)
@@ -750,7 +750,7 @@ static void mergeRegionHoles(rcContext* ctx, rcContourRegion& region)
 		for (int iter = 0; iter < hole->nverts; iter++)
 		{
 			// Find potential diagonals.
-			// The 'best' vertex must be in the cone described by 3 cosequtive vertices of the outline.
+			// The 'best' vertex must be in the cone described by 3 consecutive vertices of the outline.
 			// ..o j-1
 			//   |
 			//   |   * best
@@ -778,9 +778,9 @@ static void mergeRegionHoles(rcContext* ctx, rcContourRegion& region)
 			for (int j = 0; j < ndiags; j++)
 			{
 				const int* pt = &outline->verts[diags[j].vert*4];
-				bool intersect = intersectSegCountour(pt, corner, diags[i].vert, outline->nverts, outline->verts);
+				bool intersect = intersectSegContour(pt, corner, diags[j].vert, outline->nverts, outline->verts);
 				for (int k = i; k < region.nholes && !intersect; k++)
-					intersect |= intersectSegCountour(pt, corner, -1, region.holes[k].contour->nverts, region.holes[k].contour->verts);
+					intersect |= intersectSegContour(pt, corner, -1, region.holes[k].contour->nverts, region.holes[k].contour->verts);
 				if (!intersect)
 				{
 					index = diags[j].vert;
@@ -821,7 +821,7 @@ static void mergeRegionHoles(rcContext* ctx, rcContourRegion& region)
 /// See the #rcConfig documentation for more information on the configuration parameters.
 ///
 /// @see rcAllocContourSet, rcCompactHeightfield, rcContourSet, rcConfig
-bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
+bool rcBuildContours(rcContext* ctx, const rcCompactHeightfield& chf,
 					 const float maxError, const int maxEdgeLen,
 					 rcContourSet& cset, const int buildFlags)
 {
@@ -1092,7 +1092,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 				else
 				{
 					// The region does not have an outline.
-					// This can happen if the contour becaomes selfoverlapping because of
+					// This can happen if the contour becomes selfoverlapping because of
 					// too aggressive simplification settings.
 					ctx->log(RC_LOG_ERROR, "rcBuildContours: Bad outline for region %d, contour simplification is likely too aggressive.", i);
 				}

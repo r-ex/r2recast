@@ -740,6 +740,40 @@ inline float getJitterY(const int i)
 	return (((i * 0xd8163841) & 0xffff) / 65535.0f * 2.0f) - 1.0f;
 }
 
+static bool onHull(int a, int b, int nhull, int* hull)
+{
+	// All internal sampled points come after the hull so we can early out for those.
+	if (a >= nhull || b >= nhull)
+		return false;
+
+	for (int j = nhull - 1, i = 0; i < nhull; j = i++)
+	{
+		if (a == hull[j] && b == hull[i])
+			return true;
+	}
+
+	return false;
+}
+
+// Find edges that lie on hull and mark them as such.
+static void setTriFlags(rcIntArray& tris, int nhull, int* hull)
+{
+	// Matches DT_DETAIL_EDGE_BOUNDARY
+	const int DETAIL_EDGE_BOUNDARY = 0x1;
+
+	for (int i = 0; i < tris.size(); i += 4)
+	{
+		int a = tris[i + 0];
+		int b = tris[i + 1];
+		int c = tris[i + 2];
+		unsigned short flags = 0;
+		flags |= (onHull(a, c, nhull, hull) ? DETAIL_EDGE_BOUNDARY : 0) << 0;
+		flags |= (onHull(c, b, nhull, hull) ? DETAIL_EDGE_BOUNDARY : 0) << 2;
+		flags |= (onHull(b, a, nhull, hull) ? DETAIL_EDGE_BOUNDARY : 0) << 4;
+		tris[i + 3] = (int)flags;
+	}
+}
+
 static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 							const float sampleDist, const float sampleMaxError,
 							const int heightSearchRadius, const rcCompactHeightfield& chf,
@@ -877,6 +911,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 	if (minExtent < sampleDist*2)
 	{
 		triangulateHull(nverts, verts, nhull, hull, nin, tris);
+		setTriFlags(tris, nhull, hull);
 		return true;
 	}
 	
@@ -915,7 +950,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 			{
 				float pt[3];
 				pt[0] = x*sampleDist;
-				pt[1] = y * sampleDist;
+				pt[1] = y*sampleDist;
 				pt[2] = (bmax[2] + bmin[2])*0.5f;
 				// Make sure the samples are not too close to the edges.
 				if (distToPoly(nin,in,pt) > -sampleDist/2) continue;
@@ -947,8 +982,8 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 				// The sample location is jittered to get rid of some bad triangulations
 				// which are cause by symmetrical data from the grid structure.
 				pt[0] = s[0]*sampleDist + getJitterX(i)*cs*0.1f;
-				pt[1] = s[1] * sampleDist + getJitterY(i)*cs*0.1f;
-				pt[2] = s[2] * chf.ch;
+				pt[1] = s[1]*sampleDist + getJitterY(i)*cs*0.1f;
+				pt[2] = s[2]*chf.ch;
 				float d = distToTriMesh(pt, verts, nverts, tris.data(), tris.size()/4);
 				if (d < 0) continue; // did not hit the mesh.
 				if (d > bestd)
@@ -981,6 +1016,8 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 		tris.resize(MAX_TRIS*4);
 		ctx->log(RC_LOG_ERROR, "rcBuildPolyMeshDetail: Shrinking triangle count from %d to max %d.", ntris, MAX_TRIS);
 	}
+
+	setTriFlags(tris, nhull, hull);
 	
 	return true;
 }
@@ -1006,7 +1043,7 @@ static void seedArrayWithPolyCenter(rcContext* ctx, const rcCompactHeightfield& 
 		for (int k = 0; k < 9 && dmin > 0; ++k)
 		{
 			const int ax = (int)verts[poly[j]*3+0] + offset[k*2+0];
-			const int ay = (int)verts[poly[j]*3+1] + offset[k * 2 + 1];
+			const int ay = (int)verts[poly[j]*3+1] + offset[k*2+1];
 			const int az = (int)verts[poly[j]*3+2];
 			if (ax < hp.xmin || ax >= hp.xmin+hp.width ||
 				ay < hp.ymin || ay >= hp.ymin+hp.height)
@@ -1243,31 +1280,6 @@ static void getHeightData(rcContext* ctx, const rcCompactHeightfield& chf,
 	}
 }
 
-static unsigned char getEdgeFlags(const float* va, const float* vb,
-								  const float* vpoly, const int npoly)
-{
-	// The flag returned by this function matches dtDetailTriEdgeFlags in Detour.
-	// Figure out if edge (va,vb) is part of the polygon boundary.
-	static const float thrSqr = rcSqr(0.001f);
-	for (int i = 0, j = npoly-1; i < npoly; j=i++)
-	{
-		if (distancePtSeg2d(va, &vpoly[j*3], &vpoly[i*3]) < thrSqr &&
-			distancePtSeg2d(vb, &vpoly[j*3], &vpoly[i*3]) < thrSqr)
-			return 1;
-	}
-	return 0;
-}
-
-static unsigned char getTriFlags(const float* va, const float* vb, const float* vc,
-								 const float* vpoly, const int npoly)
-{
-	unsigned char flags = 0;
-	flags |= getEdgeFlags(va,vb,vpoly,npoly) << 0;
-	flags |= getEdgeFlags(vb,vc,vpoly,npoly) << 2;
-	flags |= getEdgeFlags(vc,va,vpoly,npoly) << 4;
-	return flags;
-}
-
 /// @par
 ///
 /// See the #rcConfig documentation for more information on the configuration parameters.
@@ -1480,18 +1492,11 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		for (int j = 0; j < ntris; ++j)
 		{
 			const int* t = &tris[j*4];
-#if 1
+
 			dmesh.tris[dmesh.ntris*4+0] = (unsigned char)t[0];
 			dmesh.tris[dmesh.ntris*4+1] = (unsigned char)t[2];
 			dmesh.tris[dmesh.ntris*4+2] = (unsigned char)t[1];
-			dmesh.tris[dmesh.ntris*4+3] = getTriFlags(&verts[t[0]*3], &verts[t[2]*3], &verts[t[1]*3], poly, npoly);
-			
-#else
-			dmesh.tris[dmesh.ntris * 4 + 0] = (unsigned char)t[0];
-			dmesh.tris[dmesh.ntris * 4 + 1] = (unsigned char)t[1];
-			dmesh.tris[dmesh.ntris * 4 + 2] = (unsigned char)t[2];
-			dmesh.tris[dmesh.ntris * 4 + 3] = getTriFlags(&verts[t[0] * 3], &verts[t[1] * 3], &verts[t[2] * 3], poly, npoly);
-#endif
+			dmesh.tris[dmesh.ntris*4+3] = (unsigned char)t[3];
 			dmesh.ntris++;
 		}
 	}
@@ -1575,6 +1580,7 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 	
 	return true;
 }
+#if !REVERSE_DIRECTION
 static unsigned char flip_flags(unsigned char flags_in)
 {
 	unsigned char flags = 0;
@@ -1583,7 +1589,8 @@ static unsigned char flip_flags(unsigned char flags_in)
 	flags |= ((flags_in >>4) & 0b11) << 4;
 	return flags;
 }
-bool rcFlipPolyMeshDetail(rcPolyMeshDetail& mdetail,int poly_tris)
+#endif // !REVERSE_DIRECTION
+bool rcFlipPolyMeshDetail(rcPolyMeshDetail& /*mdetail*/,int /*poly_tris*/)
 {
 #if !REVERSE_DIRECTION
 	for (int i = 0; i < mdetail.ntris; i++)

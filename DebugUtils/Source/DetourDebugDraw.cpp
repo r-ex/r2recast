@@ -22,25 +22,10 @@
 #include "DetourCommon.h"
 #include "DetourNode.h"
 
-
-static float distancePtLine2d(const float* pt, const float* p, const float* q)
-{
-	float pqx = q[0] - p[0];
-	float pqy = q[1] - p[1];
-	float dx = pt[0] - p[0];
-	float dy = pt[1] - p[1];
-	float d = pqx*pqx + pqy*pqy;
-	float t = pqx*dx + pqy*dy;
-	if (d != 0) t /= d;
-	dx = p[0] + t*pqx - pt[0];
-	dy = p[1] + t*pqy - pt[1];
-	return dx*dx + dy*dy;
-}
-
 static void drawOffMeshConnectionRefPosition(duDebugDraw* dd, const dtOffMeshConnection* con)
 {
 	float refPosDir[3];
-	dtCalcOffMeshRefPos(con->refPos, con->yawAngle, DT_OFFMESH_CON_REFPOS_OFFSET, refPosDir);
+	dtCalcOffMeshRefPos(con->refPos, con->refYaw, DT_OFFMESH_CON_REFPOS_OFFSET, refPosDir);
 
 	duAppendArrow(dd, con->refPos[0], con->refPos[1], con->refPos[2],
 		refPosDir[0], refPosDir[1], refPosDir[2], 0.f, 10.f, duRGBA(255, 255, 0, 255));

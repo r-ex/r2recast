@@ -59,7 +59,7 @@ int dtMergeCorridorStartMoved(dtPolyRef* path, const int npath, const int maxPat
 	int size = dtMax(0, npath-orig);
 	if (req+size > maxPath)
 		size = maxPath-req;
-	if (size)
+	if (size > 0)
 		memmove(path+req, path+orig, size*sizeof(dtPolyRef));
 	
 	// Store visited
@@ -181,17 +181,17 @@ One of the difficulties in maintaining a path is that floating point errors, loc
 steering can result in the agent crossing the boundary of the path corridor, temporarily invalidating the path. 
 This class uses local mesh queries to detect and update the corridor as needed to handle these types of issues. 
 
-The fact that local mesh queries are used to move the position and target locations results in two beahviors that 
+The fact that local mesh queries are used to move the position and target locations results in two behaviors that 
 need to be considered:
 
-Every time a move function is used there is a chance that the path will become non-optimial. Basically, the further 
+Every time a move function is used there is a chance that the path will become non-optimal. Basically, the further 
 the target is moved from its original location, and the further the position is moved outside the original corridor, 
 the more likely the path will become non-optimal. This issue can be addressed by periodically running the 
 #optimizePathTopology() and #optimizePathVisibility() methods.
 
 All local mesh queries have distance limitations. (Review the #dtNavMeshQuery methods for details.) So the most accurate 
 use case is to move the position and target in small increments. If a large increment is used, then the corridor 
-may not be able to accurately find the new location.  Because of this limiation, if a position is moved in a large
+may not be able to accurately find the new location.  Because of this limitation, if a position is moved in a large
 increment, then compare the desired and resulting polygon references. If the two do not match, then path replanning 
 may be needed.  E.g. If you move the target, check #getLastPoly() to see if it is the expected polygon.
 
@@ -364,9 +364,9 @@ bool dtPathCorridor::optimizePathTopology(dtNavMeshQuery* navquery, const dtQuer
 	
 	dtPolyRef res[MAX_RES];
 	int nres = 0;
-	navquery->initSlicedFindPath(m_path[0], m_path[m_npath-1], m_pos, m_target, filter);
-	navquery->updateSlicedFindPath(MAX_ITER, 0);
-	dtStatus status = navquery->finalizeSlicedFindPathPartial(m_path, m_npath, res, &nres, MAX_RES);
+	navquery->initSlicedFindPath(m_path[0], m_path[m_npath-1], m_pos, m_target);
+	navquery->updateSlicedFindPath(MAX_ITER, 0, filter);
+	dtStatus status = navquery->finalizeSlicedFindPathPartial(m_path, m_npath, res, &nres, MAX_RES, filter);
 	
 	if (dtStatusSucceed(status) && nres > 0)
 	{
@@ -491,9 +491,9 @@ bool dtPathCorridor::moveTargetPosition(const float* npos, dtNavMeshQuery* navqu
 		m_npath = dtMergeCorridorEndMoved(m_path, m_npath, m_maxPath, visited, nvisited);
 		// TODO: should we do that?
 		// Adjust the position to stay on top of the navmesh.
-		/*	float h = m_target[1];
+		/*	float h = m_target[2];
 		 navquery->getPolyHeight(m_path[m_npath-1], result, &h);
-		 result[1] = h;*/
+		 result[2] = h;*/
 		
 		dtVcopy(m_target, result);
 		
@@ -512,7 +512,7 @@ void dtPathCorridor::setCorridor(const float* target, const dtPolyRef* path, con
 {
 	dtAssert(m_path);
 	dtAssert(npath > 0);
-	dtAssert(npath < m_maxPath);
+	dtAssert(npath <= m_maxPath);
 	
 	dtVcopy(m_target, target);
 	memcpy(m_path, path, sizeof(dtPolyRef)*npath);

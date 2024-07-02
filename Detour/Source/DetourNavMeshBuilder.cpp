@@ -660,12 +660,12 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			con->poly = (unsigned short)(offMeshPolyBase + n);
 			// Copy connection end-points.
 			const float* endPts = &params->offMeshConVerts[i*2*3];
-			const float* traverseDirs = &params->offMeshRefPos[i*3];
+			const float* refPos = &params->offMeshConRefPos[i*3];
 			dtVcopy(&con->pos[0], &endPts[0]);
 			dtVcopy(&con->pos[3], &endPts[3]);
-			dtVcopy(&con->refPos[0], &traverseDirs[0]);
+			dtVcopy(&con->refPos[0], &refPos[0]);
 			con->rad = params->offMeshConRad[i];
-			con->yawAngle = params->offMeshConYaw[i];
+			con->refYaw = params->offMeshConRefYaw[i];
 			con->flags = params->offMeshConDir[i] ? DT_OFFMESH_CON_BIDIR : 0;
 			con->side = offMeshConClass[i*2+1];
 			if (params->offMeshConUserID)

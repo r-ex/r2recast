@@ -21,7 +21,7 @@
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
 
-static void *rcAllocDefault(size_t size, rcAllocHint)
+static void* rcAllocDefault(size_t size, rcAllocHint)
 {
 	return malloc(size);
 }
@@ -34,27 +34,21 @@ static void rcFreeDefault(void *ptr)
 static rcAllocFunc* sRecastAllocFunc = rcAllocDefault;
 static rcFreeFunc* sRecastFreeFunc = rcFreeDefault;
 
-/// @see rcAlloc, rcFree
-void rcAllocSetCustom(rcAllocFunc *allocFunc, rcFreeFunc *freeFunc)
+void rcAllocSetCustom(rcAllocFunc* allocFunc, rcFreeFunc* freeFunc)
 {
 	sRecastAllocFunc = allocFunc ? allocFunc : rcAllocDefault;
 	sRecastFreeFunc = freeFunc ? freeFunc : rcFreeDefault;
 }
 
-/// @see rcAllocSetCustom
 void* rcAlloc(size_t size, rcAllocHint hint)
 {
 	return sRecastAllocFunc(size, hint);
 }
 
-/// @par
-///
-/// @warning This function leaves the value of @p ptr unchanged.  So it still
-/// points to the same (now invalid) location, and not to null.
-/// 
-/// @see rcAllocSetCustom
 void rcFree(void* ptr)
 {
-	if (ptr)
+	if (ptr != NULL)
+	{
 		sRecastFreeFunc(ptr);
+	}
 }

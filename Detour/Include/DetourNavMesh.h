@@ -237,7 +237,7 @@ struct dtOffMeshConnection
 	float pos[6];
 
 	/// The radius of the endpoints. [Limit: >= 0]
-	float rad;		
+	float rad;
 
 	/// The polygon reference of the connection within the tile.
 	unsigned short poly;
@@ -253,15 +253,17 @@ struct dtOffMeshConnection
 	/// The id of the offmesh connection. (User assigned when the navigation mesh is built.)
 	unsigned int userId;
 
-	float refPos[3];
-	float yawAngle;
+	/// The reference position set to the start of the off-mesh connection with an offset of DT_OFFMESH_CON_REFPOS_OFFSET
+	float refPos[3]; // See [r5apex_ds + F114CF], [r5apex_ds + F11B42], [r5apex_ds + F12447].
+	/// The reference yaw angle set towards the end position of the off-mesh connection.
+	float refYaw;    // See [r5apex_ds + F11527], [r5apex_ds + F11F90], [r5apex_ds + F12836].
 };
 
 /// Calculates the yaw angle in an off-mesh connection.
 /// @param	spos[in]		The start position of the off mesh connection.
 /// @param	epos[in]		The end position of the off mesh connection.
 ///								returns the yaw angle on the XY plane.
-extern float dtCalcOffMeshYawAngle(const float* spos, const float* epos);
+extern float dtCalcOffMeshRefYaw(const float* spos, const float* epos);
 /// Calculates the ref position in an off-mesh connection.
 /// @param	spos[in]		The start position of the off mesh connection.
 /// @param	yaw[in]			The yaw angle of the off-mesh connection.
@@ -319,11 +321,11 @@ struct dtMeshTile
 	dtPolyDetail* detailMeshes;			///< The tile's detail sub-meshes. [Size: dtMeshHeader::detailMeshCount]
 	
 	/// The detail mesh's unique vertices. [(x, y, z) * dtMeshHeader::detailVertCount]
-	float* detailVerts;	
+	float* detailVerts;
 
 	/// The detail mesh's triangles. [(vertA, vertB, vertC, triFlags) * dtMeshHeader::detailTriCount].
 	/// See dtDetailTriEdgeFlags and dtGetDetailTriEdgeFlags.
-	unsigned char* detailTris;	
+	unsigned char* detailTris;
 
 	/// The tile bounding volume nodes. [Size: dtMeshHeader::bvNodeCount]
 	/// (Will be null if bounding volumes are disabled.)
@@ -400,7 +402,7 @@ public:
 	///  @param[in]		dataSize	Data size of the new tile mesh.
 	///  @param[in]		flags		Tile flags. (See: #dtTileFlags)
 	///  @param[in]		lastRef		The desired reference for the tile. (When reloading a tile.) [opt] [Default: 0]
-	///  @param[out]	result		The tile reference. (If the tile was succesfully added.) [opt]
+	///  @param[out]	result		The tile reference. (If the tile was successfully added.) [opt]
 	/// @return The status flags for the operation.
 	dtStatus addTile(unsigned char* data, int dataSize, int flags, dtTileRef lastRef, dtTileRef* result);
 	
@@ -459,7 +461,7 @@ public:
 	/// The maximum number of tiles supported by the navigation mesh.
 	/// @return The maximum number of tiles supported by the navigation mesh.
 	int getMaxTiles() const;
-	
+
 	/// Gets the tile at the specified index.
 	///  @param[in]	i		The tile index. [Limit: 0 >= index < #getMaxTiles()]
 	/// @return The tile at the specified index.
@@ -805,7 +807,7 @@ off-mesh connections.  In this case the associated pointer will be null.
 If a detail mesh exists it will share vertices with the base polygon mesh.  
 Only the vertices unique to the detail mesh will be stored in #detailVerts.
 
-@warning Tiles returned by a dtNavMesh object are not guarenteed to be populated.
+@warning Tiles returned by a dtNavMesh object are not guaranteed to be populated.
 For example: The tile at a location might not have been loaded yet, or may have been removed.
 In this case, pointers will be null.  So if in doubt, check the polygon count in the 
 tile's header to determine if a tile has polygons defined.

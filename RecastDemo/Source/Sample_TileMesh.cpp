@@ -254,7 +254,6 @@ void Sample_TileMesh::handleSettings()
 		// Max tiles and max polys affect how the tile IDs are caculated.
 		// There are 22 bits available for identifying a tile and a polygon.
 		int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
-		if (tileBits > 14) tileBits = 14;
 		int polyBits = 22 - tileBits;
 		m_maxTiles = 1 << tileBits;
 		m_maxPolysPerTile = 1 << polyBits;
@@ -276,13 +275,13 @@ void Sample_TileMesh::handleSettings()
 	
 	if (imguiButton("Save"))
 	{
-		Sample::saveAll(m_model_name.c_str(), m_navMesh);
+		Sample::saveAll(m_modelName.c_str(), m_navMesh);
 	}
 
 	if (imguiButton("Load"))
 	{
 		dtFreeNavMesh(m_navMesh);
-		m_navMesh = Sample::loadAll(m_model_name.c_str());
+		m_navMesh = Sample::loadAll(m_modelName.c_str());
 		m_navQuery->init(m_navMesh, 2048);
 	}
 
@@ -414,7 +413,7 @@ void Sample_TileMesh::handleDebugMode()
 		
 	if (unavail)
 	{
-		imguiValue("Tick 'Keep Itermediate Results'");
+		imguiValue("Tick 'Keep Intermediate Results'");
 		imguiValue("rebuild some tiles to see");
 		imguiValue("more debug mode options.");
 	}
@@ -450,7 +449,7 @@ void Sample_TileMesh::handleRender()
 	const int tw = (gw + (int)m_tileSize-1) / (int)m_tileSize;
 	const int th = (gh + (int)m_tileSize-1) / (int)m_tileSize;
 	const float s = m_tileSize*m_cellSize;
-	duDebugDrawGridXY_TF2(&m_dd, bmax[0],bmin[1],bmin[2], tw,th, s, duRGBA(0,0,0,64), 1.0f);
+	duDebugDrawGridXY(&m_dd, bmax[0],bmin[1],bmin[2], tw,th, s, duRGBA(0,0,0,64), 1.0f);
 	
 	// Draw active tile
 	duDebugDrawBoxWire(&m_dd, m_lastBuiltTileBmin[0],m_lastBuiltTileBmin[1],m_lastBuiltTileBmin[2],
@@ -730,8 +729,6 @@ void Sample_TileMesh::buildAllTiles()
 	const int ts = (int)m_tileSize;
 	const int tw = (gw + ts-1) / ts;
 	const int th = (gh + ts-1) / ts;
-	const float tcs = m_tileSize*m_cellSize;
-
 	
 	// Start the build process.
 	m_ctx->startTimer(RC_TIMER_TEMP);
@@ -785,7 +782,7 @@ void Sample_TileMesh::build_n_SaveAllHulls()
 		
 		handleSettings();
 		handleBuild();
-		Sample::saveAll(m_model_name.c_str(), m_navMesh);
+		Sample::saveAll(m_modelName.c_str(), m_navMesh);
 	}
 }
 void Sample_TileMesh::removeAllTiles()
@@ -1014,7 +1011,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	
 	
 	// Partition the heightfield so that we can use simple algorithm later to triangulate the walkable areas.
-	// There are 3 martitioning methods, each with some pros and cons:
+	// There are 3 partitioning methods, each with some pros and cons:
 	// 1) Watershed partitioning
 	//   - the classic Recast partitioning
 	//   - creates the nicest tessellation
@@ -1023,13 +1020,13 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	//   - the are some corner cases where this method creates produces holes and overlaps
 	//      - holes may appear when a small obstacles is close to large open area (triangulation can handle this)
 	//      - overlaps may occur if you have narrow spiral corridors (i.e stairs), this make triangulation to fail
-	//   * generally the best choice if you precompute the nacmesh, use this if you have large open areas
-	// 2) Monotone partioning
+	//   * generally the best choice if you precompute the navmesh, use this if you have large open areas
+	// 2) Monotone partitioning
 	//   - fastest
 	//   - partitions the heightfield into regions without holes and overlaps (guaranteed)
 	//   - creates long thin polygons, which sometimes causes paths with detours
 	//   * use this if you want fast navmesh generation
-	// 3) Layer partitoining
+	// 3) Layer partitioning
 	//   - quite fast
 	//   - partitions the heighfield into non-overlapping regions
 	//   - relies on the triangulation code to cope with holes (thus slower than monotone partitioning)
@@ -1181,12 +1178,12 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.detailTriCount = m_dmesh->ntris;
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
-		params.offMeshConYaw = m_geom->getOffMeshConnectionYaws();
-		params.offMeshRefPos = m_geom->getOffMeshConnectionRefPos();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
 		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
 		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
 		params.offMeshConUserID = m_geom->getOffMeshConnectionId();
+		params.offMeshConRefPos = m_geom->getOffMeshConnectionRefPos();
+		params.offMeshConRefYaw = m_geom->getOffMeshConnectionRefYaws();
 		params.offMeshConCount = m_geom->getOffMeshConnectionCount();
 		params.walkableHeight = m_agentHeight;
 		params.walkableRadius = m_agentRadius;

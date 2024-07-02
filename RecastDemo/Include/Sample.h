@@ -148,7 +148,7 @@ protected:
 	void saveAll(const char* path,dtNavMesh* mesh);
 
 public:
-	std::string m_model_name;
+	std::string m_modelName;
 
 	Sample();
 	virtual ~Sample();
@@ -193,9 +193,6 @@ public:
 
 	void resetCommonSettings();
 	void handleCommonSettings();
-
-	//don't do this kids, this is bad cpp
-	bool* is_tf2=nullptr;
 private:
 	// Explicitly disabled copy constructor and copy assignment operator.
 	Sample(const Sample&);

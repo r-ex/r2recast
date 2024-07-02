@@ -37,6 +37,7 @@
 #include "DetourNavMeshBuilder.h"
 #include "DetourDebugDraw.h"
 #include "DetourCommon.h"
+#include "DetourPathCorridor.h"
 
 #ifdef WIN32
 #	define snprintf _snprintf
@@ -58,52 +59,6 @@ inline bool inRange(const float* v1, const float* v2, const float r, const float
 	const float dy = v2[1] - v1[1];
 	const float dz = v2[2] - v1[2];
 	return (dx*dx + dz*dz) < r*r && fabsf(dy) < h;
-}
-
-
-static int fixupCorridor(dtPolyRef* path, const int npath, const int maxPath,
-						 const dtPolyRef* visited, const int nvisited)
-{
-	int furthestPath = -1;
-	int furthestVisited = -1;
-	
-	// Find furthest common polygon.
-	for (int i = npath-1; i >= 0; --i)
-	{
-		bool found = false;
-		for (int j = nvisited-1; j >= 0; --j)
-		{
-			if (path[i] == visited[j])
-			{
-				furthestPath = i;
-				furthestVisited = j;
-				found = true;
-			}
-		}
-		if (found)
-			break;
-	}
-
-	// If no intersection found just return current path. 
-	if (furthestPath == -1 || furthestVisited == -1)
-		return npath;
-	
-	// Concatenate paths.	
-
-	// Adjust beginning of the buffer to include the visited.
-	const int req = nvisited - furthestVisited;
-	const int orig = rcMin(furthestPath+1, npath);
-	int size = rcMax(0, npath-orig);
-	if (req+size > maxPath)
-		size = maxPath-req;
-	if (size)
-		memmove(path+req, path+orig, size*sizeof(dtPolyRef));
-	
-	// Store visited
-	for (int i = 0; i < req; ++i)
-		path[i] = visited[(nvisited-1)-i];				
-	
-	return req+size;
 }
 
 // This function checks if the path has a small U-turn, that is,
@@ -564,12 +519,12 @@ void NavMeshTesterTool::handleToggle()
 	int nvisited = 0;
 	m_navQuery->moveAlongSurface(m_pathIterPolys[0], m_iterPos, moveTgt, &m_filter,
 								 result, visited, &nvisited, 16);
-	m_pathIterPolyCount = fixupCorridor(m_pathIterPolys, m_pathIterPolyCount, MAX_POLYS, visited, nvisited);
+	m_pathIterPolyCount = dtMergeCorridorStartMoved(m_pathIterPolys, m_pathIterPolyCount, MAX_POLYS, visited, nvisited);
 	m_pathIterPolyCount = fixupShortcuts(m_pathIterPolys, m_pathIterPolyCount, m_navQuery);
 
 	float h = 0;
 	m_navQuery->getPolyHeight(m_pathIterPolys[0], result, &h);
-	result[1] = h;
+	result[2] = h;
 	dtVcopy(m_iterPos, result);
 	
 	// Handle end of path and off-mesh links when close enough.
@@ -621,7 +576,7 @@ void NavMeshTesterTool::handleToggle()
 			dtVcopy(m_iterPos, endPos);
 			float eh = 0.0f;
 			m_navQuery->getPolyHeight(m_pathIterPolys[0], m_iterPos, &eh);
-			m_iterPos[1] = eh;
+			m_iterPos[2] = eh;
 		}
 	}
 	
@@ -640,11 +595,11 @@ void NavMeshTesterTool::handleUpdate(const float /*dt*/)
 	{
 		if (dtStatusInProgress(m_pathFindStatus))
 		{
-			m_pathFindStatus = m_navQuery->updateSlicedFindPath(1,0);
+			m_pathFindStatus = m_navQuery->updateSlicedFindPath(1,0, &m_filter);
 		}
 		if (dtStatusSucceed(m_pathFindStatus))
 		{
-			m_navQuery->finalizeSlicedFindPath(m_polys, &m_npolys, MAX_POLYS);
+			m_navQuery->finalizeSlicedFindPath(m_polys, &m_npolys, MAX_POLYS, &m_filter);
 			m_nstraightPath = 0;
 			if (m_npolys)
 			{
@@ -763,7 +718,7 @@ void NavMeshTesterTool::recalc()
 					m_navQuery->moveAlongSurface(polys[0], iterPos, moveTgt, &m_filter,
 												 result, visited, &nvisited, 16);
 
-					npolys = fixupCorridor(polys, npolys, MAX_POLYS, visited, nvisited);
+					npolys = dtMergeCorridorStartMoved(polys, npolys, MAX_POLYS, visited, nvisited);
 					npolys = fixupShortcuts(polys, npolys, m_navQuery);
 
 					float h = 0;
@@ -882,7 +837,7 @@ void NavMeshTesterTool::recalc()
 			m_npolys = 0;
 			m_nstraightPath = 0;
 			
-			m_pathFindStatus = m_navQuery->initSlicedFindPath(m_startRef, m_endRef, m_spos, m_epos, &m_filter, DT_FINDPATH_ANY_ANGLE);
+			m_pathFindStatus = m_navQuery->initSlicedFindPath(m_startRef, m_endRef, m_spos, m_epos, DT_FINDPATH_ANY_ANGLE);
 		}
 		else
 		{

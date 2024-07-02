@@ -472,7 +472,8 @@ dtNavMesh* Sample::loadAll(const char* path)
 		fclose(fp);
 		return 0;
 	}
-	if(*is_tf2) patch_headertf2(header);
+
+
 	dtStatus status = mesh->init(&header.params);
 	if (dtStatusFailed(status))
 	{
@@ -495,19 +496,20 @@ dtNavMesh* Sample::loadAll(const char* path)
 			break;
 
 		unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
-		if (!data) break;
+		if (!data)
+			break;
+
 		memset(data, 0, tileHeader.dataSize);
 		readLen = fread(data, tileHeader.dataSize, 1, fp);
+
 		if (readLen != 1)
 		{
 			dtFree(data);
 			fclose(fp);
 			return 0;
 		}
-		dtTileRef result;
-		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, &result);
-		auto tile = const_cast<dtMeshTile*>(mesh->getTileByRef(result));
-		if (*is_tf2) patch_tiletf2(tile);
+
+		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, NULL);
 	}
 
 	fclose(fp);
@@ -663,7 +665,6 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 	header.params.reachabilityTableCount = m_reachabilityTableCount;
 	header.params.reachabilityTableSize = tableSize;
 
-	if (*is_tf2)unpatch_headertf2(header);
 	fwrite(&header, sizeof(NavMeshSetHeader), 1, fp);
 
 	// Store tiles.
@@ -676,10 +677,7 @@ void Sample::saveAll(const char* path,dtNavMesh* mesh)
 		tileHeader.tileRef = mesh->getTileRef(tile);
 		tileHeader.dataSize = tile->dataSize;
 		fwrite(&tileHeader, sizeof(tileHeader), 1, fp);
-
-		if (*is_tf2)unpatch_tiletf2(const_cast<dtMeshTile*>(tile));
 		fwrite(tile->data, tile->dataSize, 1, fp);
-		if (*is_tf2)patch_tiletf2(const_cast<dtMeshTile*>(tile));
 	}
 	
 	//still dont know what this thing is...

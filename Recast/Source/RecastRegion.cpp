@@ -1073,11 +1073,13 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
+				const unsigned char area = chf.areas[i];
 				const unsigned short ri = srcReg[i];
 				if (ri == 0 || ri >= nreg) continue;
 				rcRegion& reg = regions[ri];
 				
 				reg.spanCount++;
+				reg.areaType = area;
 				
 				reg.zmin = rcMin(reg.zmin, s.z);
 				reg.zmax = rcMax(reg.zmax, s.z);
@@ -1157,6 +1159,9 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 				rcRegion& regn = regions[nei];
 				// Skip already visited.
 				if (regn.id != 0)
+					continue;
+				// Skip if different area type, do not connect regions with different area type.
+				if (reg.areaType != regn.areaType)
 					continue;
 				// Skip if the neighbour is overlapping root region.
 				bool overlap = false;
@@ -1512,8 +1517,8 @@ bool rcBuildRegionsMonotone(rcContext* ctx, rcCompactHeightfield& chf,
 /// If multiple regions form an area that is smaller than @p minRegionArea, then all spans will be
 /// re-assigned to the zero (null) region.
 /// 
-/// Watershed partitioning can result in smaller than necessary regions, especially in diagonal corridors. 
-/// @p mergeRegionArea helps reduce unecessarily small regions.
+/// Watershed partitioning can result in smaller than necessary regions, especially in diagonal corridors.
+/// @p mergeRegionArea helps reduce unnecessary small regions.
 /// 
 /// See the #rcConfig documentation for more information on the configuration parameters.
 /// 
@@ -1638,7 +1643,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 	{
 		rcScopedTimer timerFilter(ctx, RC_TIMER_BUILD_REGIONS_FILTER);
 
-		// Merge regions and filter out smalle regions.
+		// Merge regions and filter out small regions.
 		rcIntArray overlaps;
 		chf.maxRegions = regionId;
 		if (!mergeAndFilterRegions(ctx, minRegionArea, mergeRegionArea, chf.maxRegions, chf, srcReg, overlaps))

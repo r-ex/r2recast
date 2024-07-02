@@ -257,6 +257,7 @@ dtStatus dtNavMesh::init(const dtNavMeshParams* params)
 	// Only allow 31 salt bits, since the salt mask is calculated using 32bit uint and it will overflow.
 	m_saltBits = dtMin((unsigned int)31, 32 - m_tileBits - m_polyBits);
 
+
 	if (m_saltBits < 10)
 		return DT_FAILURE | DT_INVALID_PARAM;
 #endif
@@ -1081,23 +1082,12 @@ const dtMeshTile* dtNavMesh::getTileAt(const int x, const int y, const int layer
 	}
 	return 0;
 }
-#define FLIP_NEIGHBOURS 0
+
 int dtNavMesh::getNeighbourTilesAt(const int x, const int y, const int side, dtMeshTile** tiles, const int maxTiles) const
 {
 	int nx = x, ny = y;
 	switch (side)
-	{   
-#if FLIP_NEIGHBOURS
-		case 0: nx--; break;
-		case 1: nx--; ny++; break;
-		case 2: ny++; break;
-		case 3: nx++; ny++; break;
-		case 4: nx++; break;
-		case 5: nx++; ny--; break;
-		case 6: ny--; break;
-		case 7: nx--; ny--; break;
-#else
-
+	{
 		case 0: nx++; break;
 		case 1: nx++; ny++; break;
 		case 2: ny++; break;
@@ -1106,7 +1096,6 @@ int dtNavMesh::getNeighbourTilesAt(const int x, const int y, const int side, dtM
 		case 5: nx--; ny--; break;
 		case 6: ny--; break;
 		case 7: nx++; ny--; break;
-#endif
 	};
 
 	return getTilesAt(nx, ny, tiles, maxTiles);
@@ -1610,7 +1599,7 @@ dtStatus dtNavMesh::getPolyArea(dtPolyRef ref, unsigned char* resultArea) const
 	return DT_SUCCESS;
 }
 
-float dtCalcOffMeshYawAngle(const float* spos, const float* epos)
+float dtCalcOffMeshRefYaw(const float* spos, const float* epos)
 {
 	float dx = epos[0]-spos[0];
 	float dy = epos[1]-spos[1];

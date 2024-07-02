@@ -112,7 +112,7 @@ bool dtIntersectSegmentPoly2D(const float* p0, const float* p1,
 							  float& tmin, float& tmax,
 							  int& segMin, int& segMax)
 {
-	static const float EPS = 0.00000001f;
+	static const float EPS = 0.000001f;
 	
 	tmin = 0;
 	tmax = 1;
@@ -368,7 +368,7 @@ void dtRandomPointInConvexPoly(const float* pts, const int npts, float* areas,
 	out[2] = a*pa[2] + b*pb[2] + c*pc[2];
 }
 
-inline float vperpXZ(const float* a, const float* b) { return a[0]*b[2] - a[2]*b[0]; }
+inline float vperpXY(const float* a, const float* b) { return a[0]*b[1] - a[1]*b[0]; }
 
 bool dtIntersectSegSeg2D(const float* ap, const float* aq,
 						 const float* bp, const float* bq,
@@ -378,10 +378,23 @@ bool dtIntersectSegSeg2D(const float* ap, const float* aq,
 	dtVsub(u,aq,ap);
 	dtVsub(v,bq,bp);
 	dtVsub(w,ap,bp);
-	float d = vperpXZ(u,v);
+	float d = vperpXY(u,v);
 	if (fabsf(d) < 1e-6f) return false;
-	s = vperpXZ(v,w) / d;
-	t = vperpXZ(u,w) / d;
+	s = vperpXY(v,w) / d;
+	t = vperpXY(u,w) / d;
 	return true;
 }
 
+float distancePtLine2d(const float* pt, const float* p, const float* q)
+{
+	float pqx = q[0] - p[0];
+	float pqy = q[1] - p[1];
+	float dx = pt[0] - p[0];
+	float dy = pt[1] - p[1];
+	float d = pqx * pqx + pqy * pqy;
+	float t = pqx * dx + pqy * dy;
+	if (d != 0) t /= d;
+	dx = p[0] + t * pqx - pt[0];
+	dy = p[1] + t * pqy - pt[1];
+	return dx * dx + dy * dy;
+}
